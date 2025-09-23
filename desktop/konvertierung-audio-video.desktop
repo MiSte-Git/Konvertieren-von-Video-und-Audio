@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Konvertierung Audio-Video
+Comment=Konvertiert Videos und Audios mit LAME/ffmpeg
+Exec=/usr/local/bin/convert_to_mp3_Lame.sh
+Terminal=false
+Icon=audio-x-generic
+Categories=AudioVideo;Audio;
+StartupNotify=false
