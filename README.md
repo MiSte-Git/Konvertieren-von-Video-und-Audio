@@ -1,27 +1,79 @@
 # Konvertierung Audio-Video
 
-Bash-Skript mit Zenity-Oberfläche zum Konvertieren von Video- und Audiodateien.
-Die Optionen umfassen `Video zu MP3 (ffmpeg + LAME)`, `Audio zu MP3 (ffmpeg + LAME)` und `Video mit DivX zu AVI (Panasonic TV)`.
-Für jede Auswahl wird eine Datei per Dialog bestimmt, während ein Fortschrittsfenster läuft.
+Dieses Repository enthält zwei Varianten:
 
-## Voraussetzungen
-- Debian/Ubuntu oder kompatible Distribution
-- `ffmpeg`
-- `lame`
-- `zenity`
+1) Bash-Skript mit Zenity-Oberfläche (Linux): `convert_to_mp3_Lame.sh`
+2) Neue plattformübergreifende Python-GUI (PySimpleGUI): `src/app.py`
+
+Die Python-App unterstützt die gleichen Modi:
+- Video → MP3 (ffmpeg + libmp3lame)
+- Audio → MP3 (ffmpeg + libmp3lame)
+- Video → AVI (DivX/Xvid-kompatibel, qscale=7)
+
+Es wird ein pulsierender Fortschritt und ein Live‑Timer angezeigt. Nach Abschluss/Abbruch/Fehler wird die Dauer gezeigt. Optional wird bei DivX per ffprobe die Laufzeit verglichen.
+
+## Voraussetzungen (Python-App)
+- Python 3.8+
+- ffmpeg im PATH (optional ffprobe) oder beigepackt in `bin/` bzw. `bin/<os>`
+  - `<os>` ist `linux`, `windows` oder `darwin` (macOS)
+
+### Entwicklung / Start
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+python src/app.py
+```
+
+### ffmpeg/ffprobe beilegen
+Lege die Binaries in folgende Pfade (je nach Zielplattform):
+- `bin/` (global für alle Plattformen)
+- `bin/linux`, `bin/windows`, `bin/darwin` (plattform-spezifisch)
+
+Die App erweitert beim Start automatisch den PATH um diese Ordner.
+
+### Build (PyInstaller)
+PyInstaller muss pro Zielplattform auf dieser Plattform ausgeführt werden.
+
+Linux (Onefile, GUI):
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --name konvertierung \
+  --add-data "bin:bin" \
+  src/app.py
+```
+Ergebnis: `dist/konvertierung`
+
+Windows (.exe) – auf Windows ausführen:
+```powershell
+pyinstaller --onefile --windowed --name konvertierung `
+  --add-data "bin;bin" `
+  src/app.py
+```
+
+macOS (Onefile) – auf macOS ausführen:
+```bash
+pyinstaller --onefile --windowed --name konvertierung \
+  --add-data "bin:bin" \
+  src/app.py
+```
+
+## Bash-Skript (Linux)
+Voraussetzungen: `ffmpeg`, `lame`, `zenity`
 
 Installation unter Debian/Ubuntu:
 ```bash
 sudo apt install ffmpeg lame zenity
 ```
 
-## Projektstruktur
+Projektstruktur (Ausschnitt):
 ```
-convert_to_mp3_Lame.sh      # Hauptskript
-desktop/konvertierung-audio-video.desktop  # Vorlage für Menüeintrag
+convert_to_mp3_Lame.sh                     # Bash-Hauptskript
+src/app.py                                  # Python GUI
+requirements.txt                            # Python-Abhängigkeiten
 ```
 
-## Installation des Skripts
+### Installation des Bash-Skripts
 1. Skript ausführbar machen:
    ```bash
    chmod +x convert_to_mp3_Lame.sh
@@ -35,49 +87,10 @@ desktop/konvertierung-audio-video.desktop  # Vorlage für Menüeintrag
    /usr/local/bin/convert_to_mp3_Lame.sh
    ```
 
-## Menüeintrag anlegen
-
-### Nur für den aktuellen Benutzer
-1. Desktop-Datei kopieren:
-   ```bash
-   mkdir -p ~/.local/share/applications
-   cp desktop/konvertierung-audio-video.desktop ~/.local/share/applications/
-   ```
-2. Falls das Skript an einem anderen Ort liegt, `Exec=` in der Desktop-Datei anpassen.
-3. Optional ein eigenes Icon setzen (`Icon=`). Systemicons können unter `/usr/share/icons` gewählt werden.
-4. Desktop-Datenbank aktualisieren (optional, GNOME):
-   ```bash
-   update-desktop-database ~/.local/share/applications
-   ```
-5. Der Eintrag erscheint danach im Anwendungsmenü unter "Audio & Video" (oder dem entsprechenden Bereich).
-
-### Systemweit (z.B. für bestehende Installation unter `/usr/share/applications`)
-1. Desktop-Datei installieren:
-   ```bash
-   sudo install -m 644 desktop/konvertierung-audio-video.desktop /usr/share/applications/convert-to-mp3_Lame.desktop
-   ```
-2. Namen/Icon/Kommentar nach Bedarf direkt in `/usr/share/applications/convert-to-mp3_Lame.desktop` anpassen, z.B.:
-   ```ini
-   [Desktop Entry]
-   Name=Konvertieren von Video/Audio (MiSt)
-   Comment=Konvertiert MP4-Dateien in MP3 mit FFmpeg, LAME und DivX
-   Exec=/usr/local/bin/convert_to_mp3_Lame.sh
-   Icon=multimedia
-   ```
-3. Desktop-Datenbank aktualisieren (optional, GNOME):
-   ```bash
-   sudo update-desktop-database /usr/share/applications
-   ```
-4. Systemweite Einträge erscheinen für alle Benutzer im Menü.
-
-## Aktualisieren
-Bei Änderungen am Skript erneut Schritt 2 aus der Installation ausführen.
-Für Anpassungen am Menüeintrag die Desktop-Datei im Home-Verzeichnis editieren.
-
-## Fehlerbehebung
-- **Fehlende Programme:** Sicherstellen, dass `ffmpeg`, `lame` und `zenity` installiert sind.
-- **Keine GUI:** Das Skript benötigt eine grafische Sitzung.
-- **Konvertierung schlägt fehl:** Fehlermeldung prüfen. Bei ffmpeg-Fehlern Terminal starten und Skript dort aufrufen.
+## Fehlerbehebung (Python-App)
+- ffmpeg/ffprobe werden nicht gefunden: Binaries in `bin/` oder `bin/<os>` ablegen oder Systeminstallation vornehmen.
+- Keine GUI: Stelle sicher, dass eine grafische Sitzung verfügbar ist.
+- Konvertierung schlägt fehl: Log (bei DivX) prüfen und/oder ffmpeg im Terminal testen.
 
 ## Lizenz
 Bitte hier nach Bedarf ergänzen.
