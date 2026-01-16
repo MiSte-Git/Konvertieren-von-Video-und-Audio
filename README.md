@@ -3,59 +3,81 @@
 Dieses Repository enthält zwei Varianten:
 
 1) Bash-Skript mit Zenity-Oberfläche (Linux): `convert_to_mp3_Lame.sh`
-2) Neue plattformübergreifende Python-GUI (PySimpleGUI): `src/app.py`
+2) Plattformunabhaengige GUI (Tauri/Rust): `tauri-app/`
 
-Die Python-App unterstützt die gleichen Modi:
-- Video → MP3 (ffmpeg + libmp3lame)
-- Audio → MP3 (ffmpeg + libmp3lame)
-- Video → AVI (DivX/Xvid-kompatibel, qscale=7)
+## Tauri GUI (Rust)
+Experimental: plattformunabhaengige GUI auf Basis von Tauri.
 
-Es wird ein pulsierender Fortschritt und ein Live‑Timer angezeigt. Nach Abschluss/Abbruch/Fehler wird die Dauer gezeigt. Optional wird bei DivX per ffprobe die Laufzeit verglichen.
+Ordnerstruktur: `tauri-app/`
 
-## Voraussetzungen (Python-App)
-- Python 3.8+
-- ffmpeg im PATH (optional ffprobe) oder beigepackt in `bin/` bzw. `bin/<os>`
-  - `<os>` ist `linux`, `windows` oder `darwin` (macOS)
+Voraussetzungen fuer Build/Installer (pro Plattform):
+- Windows: Rust, Visual Studio Build Tools, WebView2 Runtime; fuer MSI zusaetzlich WiX
+- macOS: Rust, Xcode Command Line Tools
+- Linux: Rust, WebKitGTK + systemnahe Abhaengigkeiten (z.B. `libwebkit2gtk-4.1-dev`, `libssl-dev`, `libgtk-3-dev`)
 
-### Entwicklung / Start
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-python src/app.py
-```
+Install-Beispiele:
 
-### ffmpeg/ffprobe beilegen
-Lege die Binaries in folgende Pfade (je nach Zielplattform):
-- `bin/` (global für alle Plattformen)
-- `bin/linux`, `bin/windows`, `bin/darwin` (plattform-spezifisch)
-
-Die App erweitert beim Start automatisch den PATH um diese Ordner.
-
-### Build (PyInstaller)
-PyInstaller muss pro Zielplattform auf dieser Plattform ausgeführt werden.
-
-Linux (Onefile, GUI):
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name konvertierung \
-  --add-data "bin:bin" \
-  src/app.py
-```
-Ergebnis: `dist/konvertierung`
-
-Windows (.exe) – auf Windows ausführen:
+Windows (PowerShell, als Administrator):
 ```powershell
-pyinstaller --onefile --windowed --name konvertierung `
-  --add-data "bin;bin" `
-  src/app.py
+# Rust
+winget install --id Rustlang.Rustup -e
+
+# Visual Studio Build Tools
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e
+
+# WebView2 Runtime
+winget install --id Microsoft.EdgeWebView2Runtime -e
+
+# WiX (nur fuer MSI)
+winget install --id WiXToolset.WiXToolset -e
 ```
 
-macOS (Onefile) – auf macOS ausführen:
+macOS:
 ```bash
-pyinstaller --onefile --windowed --name konvertierung \
-  --add-data "bin:bin" \
-  src/app.py
+# Xcode Command Line Tools
+xcode-select --install
+
+# Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Linux (Debian/Ubuntu):
+```bash
+sudo apt update
+sudo apt install -y libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev pkg-config build-essential curl
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+Hinweis (Debian 12/Bookworm): `libwebkit2gtk-4.0-dev` scheitert wegen libsoup2.4, bitte `libwebkit2gtk-4.1-dev` verwenden.
+
+Tauri CLI installieren (v2):
+```bash
+cargo install tauri-cli --version "^2"
+```
+
+ffmpeg bereitstellen:
+- Systemweit installieren oder
+- im App-Ordner beilegen (z.B. `tauri-app/bin/` oder `tauri-app/bin/<os>`)
+
+Preflight-Check (optional):
+```bash
+tauri-app/scripts/check_deps.sh
+```
+Windows:
+```powershell
+tauri-app\\scripts\\check_deps.ps1
+```
+
+Start (nach Installation von Rust + tauri-cli):
+```bash
+cd tauri-app
+cargo tauri dev
+```
+Hinweis: `cargo tauri dev` startet einen lokalen HTTP-Server fuer `tauri-app/ui` auf Port 1420 (via Python 3).
+
+Build (Installer/Bundles):
+```bash
+cd tauri-app
+cargo tauri build
 ```
 
 ## Bash-Skript (Linux)
@@ -69,8 +91,7 @@ sudo apt install ffmpeg lame zenity
 Projektstruktur (Ausschnitt):
 ```
 convert_to_mp3_Lame.sh                     # Bash-Hauptskript
-src/app.py                                  # Python GUI
-requirements.txt                            # Python-Abhängigkeiten
+tauri-app/                                  # Tauri GUI (Rust)
 ```
 
 ### Installation des Bash-Skripts
@@ -87,10 +108,5 @@ requirements.txt                            # Python-Abhängigkeiten
    /usr/local/bin/convert_to_mp3_Lame.sh
    ```
 
-## Fehlerbehebung (Python-App)
-- ffmpeg/ffprobe werden nicht gefunden: Binaries in `bin/` oder `bin/<os>` ablegen oder Systeminstallation vornehmen.
-- Keine GUI: Stelle sicher, dass eine grafische Sitzung verfügbar ist.
-- Konvertierung schlägt fehl: Log (bei DivX) prüfen und/oder ffmpeg im Terminal testen.
-
 ## Lizenz
-Bitte hier nach Bedarf ergänzen.
+GNU General Public License v3.0 (GPL-3.0). Siehe `LICENSE`.

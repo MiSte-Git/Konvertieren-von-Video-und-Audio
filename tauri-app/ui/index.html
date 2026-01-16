@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Konvertierung Audio-Video</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>Konvertierung Audio-Video</h1>
+        <p>Plattformunabhaengige GUI (Tauri)</p>
+      </header>
+
+      <section class="card">
+        <h2>Modus</h2>
+        <div class="grid modes">
+          <label><input type="radio" name="mode" value="v2mp3" checked /> Video zu MP3</label>
+          <label><input type="radio" name="mode" value="a2mp3" /> Audio zu MP3</label>
+          <label><input type="radio" name="mode" value="divx" /> Video zu AVI (DivX)</label>
+          <label><input type="radio" name="mode" value="clip" /> Video-Ausschnitt</label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Dateien</h2>
+        <div class="row">
+          <label>Quelle</label>
+          <input id="inputPath" type="text" placeholder="Quelldatei waehlen" />
+          <button id="browseInput">Quelle waehlen</button>
+        </div>
+        <div class="row">
+          <label>Ziel</label>
+          <input id="outputPath" type="text" placeholder="Zieldatei (optional)" />
+          <button id="browseOutput">Ziel waehlen</button>
+        </div>
+      </section>
+
+      <section id="clipSection" class="card hidden">
+        <h2>Ausschnitt</h2>
+        <div class="row">
+          <label>Start (HH:MM:SS)</label>
+          <input id="clipStart" type="text" placeholder="01:39:59" />
+        </div>
+        <div class="row">
+          <label>Ende (HH:MM:SS)</label>
+          <input id="clipEnd" type="text" placeholder="02:03:07" />
+        </div>
+        <div class="grid modes">
+          <label class="with-info">
+            <input type="radio" name="clipMode" value="only" checked />
+            Nur Ausschnitt speichern
+            <span class="info-icon" aria-label="Info">
+              i
+              <span class="tooltip">Original bleibt unveraendert.</span>
+            </span>
+          </label>
+          <label class="with-info">
+            <input type="radio" name="clipMode" value="minus" />
+            Ausschnitt entfernen
+            <span class="info-icon" aria-label="Info">
+              i
+              <span class="tooltip">Original bleibt erhalten und es wird eine Kopie vom Original erstellt, in der der angegebene Ausschnitt entfernt wurde.</span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="card actions">
+        <button id="startBtn" class="primary">Start</button>
+        <button id="cancelBtn" class="secondary" disabled>Abbrechen</button>
+        <span id="status" class="status">Bereit.</span>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

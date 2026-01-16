@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Konvertierung Audio-Video (GUI)
-Comment=Konvertiert Video/Audio-Dateien (ffmpeg, DivX/MP3)
-Exec=konvertierung
-Terminal=false
-Icon=konvertierung
-Categories=AudioVideo;Audio;
-StartupNotify=true

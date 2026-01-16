@@ -20,6 +20,8 @@ dist/
 *.spec
 *.egg-info/
 *.egg
+tauri-app/src-tauri/target/
+tauri-app/target/
 
 # Logs / temp
 *.log
