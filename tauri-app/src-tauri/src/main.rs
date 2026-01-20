@@ -1,11 +1,15 @@
+use std::collections::HashMap;
+use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Manager, State};
+use serde::Serialize;
+use tauri::{AppHandle, Emitter, Manager, State};
 
 struct AppState {
     current_pid: Arc<Mutex<Option<u32>>>,
+    progress: Arc<Mutex<Option<HashMap<String, String>>>>,
 }
 
 fn os_subdir() -> &'static str {
@@ -70,19 +74,57 @@ fn is_hh_mm_ss(value: &str) -> bool {
     }
 }
 
-fn run_ffmpeg(args: Vec<String>, current_pid: Arc<Mutex<Option<u32>>>) -> Result<(), String> {
+#[derive(Serialize, Clone)]
+struct FfmpegProgress {
+    values: HashMap<String, String>,
+}
+
+fn run_ffmpeg(
+    mut args: Vec<String>,
+    current_pid: Arc<Mutex<Option<u32>>>,
+    progress_state: Arc<Mutex<Option<HashMap<String, String>>>>,
+    app: AppHandle,
+) -> Result<(), String> {
     if args.is_empty() {
         return Err("Leerer ffmpeg-Befehl".into());
     }
+    if !args.iter().any(|a| a == "-progress") && args.len() >= 2 {
+        let output = args.pop().unwrap_or_default();
+        args.push("-progress".to_string());
+        args.push("pipe:1".to_string());
+        args.push(output);
+    }
     let mut cmd = Command::new(&args[0]);
-    cmd.args(&args[1..]);
+    cmd.args(&args[1..]).stdout(Stdio::piped()).stderr(Stdio::inherit());
     let mut child = cmd.spawn().map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
     {
         let mut guard = current_pid.lock().map_err(|_| "Lock-Fehler".to_string())?;
         *guard = Some(child.id());
     }
+    if let Some(stdout) = child.stdout.take() {
+        let reader = BufReader::new(stdout);
+        let mut values: HashMap<String, String> = HashMap::new();
+        for line in reader.lines() {
+            let line = line.map_err(|e| format!("ffmpeg-Ausgabe konnte nicht gelesen werden: {e}"))?;
+            if let Some((key, value)) = line.split_once('=') {
+                values.insert(key.to_string(), value.to_string());
+                if let Ok(mut guard) = progress_state.lock() {
+                    *guard = Some(values.clone());
+                }
+                if key == "progress" {
+                    let payload = FfmpegProgress {
+                        values: values.clone(),
+                    };
+                    let _ = app.emit("ffmpeg_progress", payload);
+                }
+            }
+        }
+    }
     let status = child.wait().map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
     if let Ok(mut guard) = current_pid.lock() {
+        *guard = None;
+    }
+    if let Ok(mut guard) = progress_state.lock() {
         *guard = None;
     }
     if !status.success() {
@@ -122,13 +164,27 @@ fn cancel_current(state: State<AppState>) -> Result<(), String> {
     if let Some(pid) = *guard {
         kill_pid(pid)?;
         *guard = None;
+        if let Ok(mut progress_guard) = state.progress.lock() {
+            *progress_guard = None;
+        }
         return Ok(());
     }
     Err("Kein laufender Prozess.".into())
 }
 
 #[tauri::command]
-async fn convert_media(mode: String, input: String, output: String, state: State<'_, AppState>) -> Result<(), String> {
+fn get_progress(state: State<AppState>) -> Option<HashMap<String, String>> {
+    state.progress.lock().ok().and_then(|p| p.clone())
+}
+
+#[tauri::command]
+async fn convert_media(
+    mode: String,
+    input: String,
+    output: String,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
@@ -156,13 +212,24 @@ async fn convert_media(mode: String, input: String, output: String, state: State
 
     let args_owned = args.into_iter().map(|s| s.to_string()).collect();
     let current_pid = state.current_pid.clone();
-    tauri::async_runtime::spawn_blocking(move || run_ffmpeg(args_owned, current_pid))
+    let progress_state = state.progress.clone();
+    let app_handle = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        run_ffmpeg(args_owned, current_pid, progress_state, app_handle)
+    })
         .await
         .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-async fn clip_media(input: String, output: String, start: String, end: String, state: State<'_, AppState>) -> Result<(), String> {
+async fn clip_media(
+    input: String,
+    output: String,
+    start: String,
+    end: String,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
@@ -179,13 +246,24 @@ async fn clip_media(input: String, output: String, start: String, end: String, s
     ];
     let args_owned = args.into_iter().map(|s| s.to_string()).collect();
     let current_pid = state.current_pid.clone();
-    tauri::async_runtime::spawn_blocking(move || run_ffmpeg(args_owned, current_pid))
+    let progress_state = state.progress.clone();
+    let app_handle = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        run_ffmpeg(args_owned, current_pid, progress_state, app_handle)
+    })
         .await
         .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-async fn remove_clip(input: String, output: String, start: String, end: String, state: State<'_, AppState>) -> Result<(), String> {
+async fn remove_clip(
+    input: String,
+    output: String,
+    start: String,
+    end: String,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
@@ -239,9 +317,11 @@ async fn remove_clip(input: String, output: String, start: String, end: String, 
         .collect();
 
     let current_pid = state.current_pid.clone();
+    let progress_state = state.progress.clone();
+    let app_handle = app.clone();
     tauri::async_runtime::spawn_blocking(move || {
         for cmd in cmds {
-            run_ffmpeg(cmd, current_pid.clone())?;
+            run_ffmpeg(cmd, current_pid.clone(), progress_state.clone(), app_handle.clone())?;
         }
         Ok(())
     })
@@ -254,12 +334,19 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {
             current_pid: Arc::new(Mutex::new(None)),
+            progress: Arc::new(Mutex::new(None)),
         })
         .setup(|app| {
             add_local_bin_to_path(&app.handle());
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![convert_media, clip_media, remove_clip, cancel_current])
+        .invoke_handler(tauri::generate_handler![
+            convert_media,
+            clip_media,
+            remove_clip,
+            cancel_current,
+            get_progress
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

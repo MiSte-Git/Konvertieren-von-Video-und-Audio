@@ -3,10 +3,10 @@
 Dieses Repository enthält zwei Varianten:
 
 1) Bash-Skript mit Zenity-Oberfläche (Linux): `convert_to_mp3_Lame.sh`
-2) Plattformunabhaengige GUI (Tauri/Rust): `tauri-app/`
+2) Plattformunabhängige GUI (Tauri/Rust): `tauri-app/`
 
 ## Tauri GUI (Rust)
-Experimental: plattformunabhaengige GUI auf Basis von Tauri.
+Experimental: plattformunabhängige GUI auf Basis von Tauri.
 
 Ordnerstruktur: `tauri-app/`
 

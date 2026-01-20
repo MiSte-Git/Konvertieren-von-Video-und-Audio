@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "python3 -m http.server 1420 --directory ./ui",
     "beforeBuildCommand": "",
-    "devUrl": "http://localhost:1420/index.html",
+    "devUrl": "http://localhost:1420/index.html?dev=2",
     "frontendDist": "../ui"
   },
   "app": {
@@ -15,7 +15,8 @@
         "title": "Konvertierung Audio-Video",
         "width": 900,
         "height": 620,
-        "resizable": true
+        "resizable": true,
+        "skipTaskbar": true
       }
     ]
   },

@@ -102,13 +102,17 @@ input[type="text"] {
   font-size: 12px;
   font-weight: 700;
   cursor: default;
+  align-self: flex-start;
 }
 
 .tooltip {
   position: absolute;
-  left: 50%;
+  left: 0;
+  right: auto;
   top: 130%;
-  transform: translateX(-50%);
+  bottom: auto;
+  transform: none;
+  margin-left: 0;
   min-width: 220px;
   max-width: 320px;
   padding: 8px 10px;
@@ -123,6 +127,14 @@ input[type="text"] {
   pointer-events: none;
   transition: opacity 120ms ease;
   z-index: 10;
+}
+
+.with-info {
+  position: relative;
+}
+
+.with-info .tooltip {
+  max-width: min(320px, 80vw);
 }
 
 .info-icon:hover .tooltip,
@@ -162,10 +174,51 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .status {
   color: var(--muted);
+}
+
+.progress {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(31, 24, 15, 0.15);
+  border-top-color: var(--accent);
+  animation: spin 0.9s linear infinite;
+}
+
+.progress-bar {
+  position: relative;
+  width: 160px;
+  height: 6px;
+  border-radius: 999px;
+  background: #efe9dc;
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: "";
+  position: absolute;
+  left: -40%;
+  width: 40%;
+  height: 100%;
+  background: var(--accent);
+  animation: indeterminate 1.2s ease-in-out infinite;
+}
+
+body.is-running .progress {
+  display: flex;
 }
 
 .hidden {
@@ -182,5 +235,23 @@ button:disabled {
   .actions {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes indeterminate {
+  0% {
+    left: -40%;
+  }
+  50% {
+    left: 60%;
+  }
+  100% {
+    left: 100%;
   }
 }
