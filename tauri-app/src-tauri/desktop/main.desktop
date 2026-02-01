@@ -1,0 +1,19 @@
+[Desktop Entry]
+Categories={{categories}}
+{{#if comment}}
+Comment={{comment}}
+{{/if}}
+Exec={{exec}}
+Icon={{icon}}
+Name={{name}}
+StartupWMClass=konvertierung-tauri
+Terminal=false
+Type=Application
+Actions=NewWindow;
+{{#if mime_type}}
+MimeType={{mime_type}}
+{{/if}}
+
+[Desktop Action NewWindow]
+Name=Neues Fenster
+Exec={{exec}}

@@ -6,6 +6,7 @@ use std::process::{Command, Stdio};
 use std::sync::{Arc, Mutex};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::image::Image;
 
 struct AppState {
     current_pid: Arc<Mutex<Option<u32>>>,
@@ -133,6 +134,184 @@ fn run_ffmpeg(
     Ok(())
 }
 
+fn run_ffmpeg_lame(
+    ffmpeg_args: Vec<String>,
+    lame_args: Vec<String>,
+    output_path: String,
+    current_pid: Arc<Mutex<Option<u32>>>,
+    progress_state: Arc<Mutex<Option<HashMap<String, String>>>>,
+    app: AppHandle,
+) -> Result<(), String> {
+    if ffmpeg_args.is_empty() || lame_args.is_empty() {
+        return Err("Leerer ffmpeg/lame-Befehl".into());
+    }
+
+    let mut ffmpeg_cmd = Command::new(&ffmpeg_args[0]);
+    ffmpeg_cmd
+        .args(&ffmpeg_args[1..])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    let mut ffmpeg_child = ffmpeg_cmd
+        .spawn()
+        .map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
+
+    {
+        let mut guard = current_pid.lock().map_err(|_| "Lock-Fehler".to_string())?;
+        *guard = Some(ffmpeg_child.id());
+    }
+
+    let ffmpeg_stdout = ffmpeg_child
+        .stdout
+        .take()
+        .ok_or("ffmpeg-stdout nicht verfügbar".to_string())?;
+    let mut lame_cmd = Command::new(&lame_args[0]);
+    lame_cmd
+        .args(&lame_args[1..])
+        .stdin(Stdio::from(ffmpeg_stdout))
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit());
+    let mut lame_child = lame_cmd
+        .spawn()
+        .map_err(|e| format!("lame konnte nicht gestartet werden: {e}"))?;
+
+    if let Some(stderr) = ffmpeg_child.stderr.take() {
+        let reader = BufReader::new(stderr);
+        let mut values: HashMap<String, String> = HashMap::new();
+        for line in reader.lines() {
+            let line = line.map_err(|e| format!("ffmpeg-Ausgabe konnte nicht gelesen werden: {e}"))?;
+            if let Some((key, value)) = line.split_once('=') {
+                values.insert(key.to_string(), value.to_string());
+                if let Ok(mut guard) = progress_state.lock() {
+                    *guard = Some(values.clone());
+                }
+                if key == "progress" {
+                    let payload = FfmpegProgress {
+                        values: values.clone(),
+                    };
+                    let _ = app.emit("ffmpeg_progress", payload);
+                }
+            }
+        }
+    }
+
+    let ffmpeg_status = ffmpeg_child
+        .wait()
+        .map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
+    if !ffmpeg_status.success() {
+        let _ = lame_child.kill();
+        let _ = lame_child.wait();
+        if let Ok(mut guard) = current_pid.lock() {
+            *guard = None;
+        }
+        if let Ok(mut guard) = progress_state.lock() {
+            *guard = None;
+        }
+        return Err(format!(
+            "ffmpeg fehlgeschlagen (Exit-Code {:?})",
+            ffmpeg_status.code()
+        ));
+    }
+
+    let lame_status = lame_child
+        .wait()
+        .map_err(|e| format!("lame konnte nicht gestartet werden: {e}"))?;
+
+    if let Ok(mut guard) = current_pid.lock() {
+        *guard = None;
+    }
+    if let Ok(mut guard) = progress_state.lock() {
+        *guard = None;
+    }
+    if !lame_status.success() {
+        return Err(format!(
+            "lame fehlgeschlagen (Exit-Code {:?})",
+            lame_status.code()
+        ));
+    }
+    if let Err(warn) = verify_lame_output(&output_path) {
+        let _ = app.emit("lame_warning", warn);
+    }
+    Ok(())
+}
+
+fn extract_version_token(input: &str) -> Option<String> {
+    for token in input.split_whitespace() {
+        let mut has_digit = false;
+        let mut has_dot = false;
+        for ch in token.chars() {
+            if ch.is_ascii_digit() {
+                has_digit = true;
+            } else if ch == '.' {
+                has_dot = true;
+            } else if ch == ',' || ch == ')' || ch == '(' {
+                continue;
+            }
+        }
+        if has_digit && has_dot {
+            return Some(token.trim_matches(|c: char| !c.is_ascii_digit() && c != '.').to_string());
+        }
+    }
+    None
+}
+
+fn get_lame_version() -> Option<String> {
+    let output = Command::new("lame").arg("--version").output().ok()?;
+    let text = String::from_utf8_lossy(&output.stdout);
+    extract_version_token(&text)
+}
+
+fn verify_lame_output(path: &str) -> Result<(), String> {
+    let output = Command::new("ffprobe")
+        .args([
+            "-v", "error",
+            "-show_entries", "format_tags=encoder:stream_tags=encoder",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            path,
+        ])
+        .output()
+        .map_err(|e| format!("ffprobe konnte nicht gestartet werden: {e}"))?;
+
+    if !output.status.success() {
+        return Err("ffprobe fehlgeschlagen beim Prüfen der MP3-Encoder-Tags.".into());
+    }
+
+    let tags = String::from_utf8_lossy(&output.stdout);
+    if !tags.to_ascii_lowercase().contains("lame") {
+        return Err("MP3 wurde nicht mit LAME kodiert (kein LAME-Encoder-Tag gefunden).".into());
+    }
+
+    if let Some(expected) = get_lame_version() {
+        if !tags.contains(&expected) {
+            return Err(format!(
+                "MP3-Encoder-Tag enthält nicht die installierte LAME-Version ({expected})."
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn get_media_duration(input: String) -> Result<f64, String> {
+    if !Path::new(&input).is_file() {
+        return Err("Bitte eine gültige Eingabedatei wählen.".into());
+    }
+    let output = Command::new("ffprobe")
+        .args([
+            "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            &input,
+        ])
+        .output()
+        .map_err(|e| format!("ffprobe konnte nicht gestartet werden: {e}"))?;
+    if !output.status.success() {
+        return Err("ffprobe fehlgeschlagen beim Ermitteln der Dauer.".into());
+    }
+    let raw = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    raw.parse::<f64>()
+        .map_err(|_| "Dauer konnte nicht gelesen werden.".into())
+}
+
 #[cfg(target_family = "unix")]
 fn kill_pid(pid: u32) -> Result<(), String> {
     let status = Command::new("kill")
@@ -193,10 +372,13 @@ async fn convert_media(
     let args = match mode.as_str() {
         "v2mp3" => vec![
             "ffmpeg", "-y", "-i", &input, "-vn", "-ar", "44100", "-ac", "2",
-            "-c:a", "libmp3lame", "-b:a", "192k", &output,
+            "-nostats", "-loglevel", "error", "-progress", "pipe:2",
+            "-f", "wav", "pipe:1",
         ],
         "a2mp3" => vec![
-            "ffmpeg", "-y", "-i", &input, "-vn", "-c:a", "libmp3lame", "-b:a", "192k", &output,
+            "ffmpeg", "-y", "-i", &input, "-vn",
+            "-nostats", "-loglevel", "error", "-progress", "pipe:2",
+            "-f", "wav", "pipe:1",
         ],
         "divx" => vec![
             "ffmpeg", "-y", "-hwaccel", "auto", "-fflags", "+genpts", "-i", &input,
@@ -210,12 +392,33 @@ async fn convert_media(
         _ => return Err("Unbekannter Modus".into()),
     };
 
-    let args_owned = args.into_iter().map(|s| s.to_string()).collect();
+    let args_owned: Vec<String> = args.into_iter().map(|s| s.to_string()).collect();
     let current_pid = state.current_pid.clone();
     let progress_state = state.progress.clone();
     let app_handle = app.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        run_ffmpeg(args_owned, current_pid, progress_state, app_handle)
+        if mode == "v2mp3" || mode == "a2mp3" {
+            let output_path = output.clone();
+            let lame_args = vec![
+                "lame".to_string(),
+                "-b".to_string(),
+                "192".to_string(),
+                "--cbr".to_string(),
+                "--id3v2-only".to_string(),
+                "-".to_string(),
+                output,
+            ];
+            run_ffmpeg_lame(
+                args_owned,
+                lame_args,
+                output_path,
+                current_pid,
+                progress_state,
+                app_handle,
+            )
+        } else {
+            run_ffmpeg(args_owned, current_pid, progress_state, app_handle)
+        }
     })
         .await
         .map_err(|e| e.to_string())?
@@ -338,6 +541,12 @@ fn main() {
         })
         .setup(|app| {
             add_local_bin_to_path(&app.handle());
+            let icon_bytes = include_bytes!("../icons/icon.png");
+            if let Ok(icon) = Image::from_bytes(icon_bytes) {
+                for window in app.webview_windows().values() {
+                    let _ = window.set_icon(icon.clone());
+                }
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -345,7 +554,8 @@ fn main() {
             clip_media,
             remove_clip,
             cancel_current,
-            get_progress
+            get_progress,
+            get_media_duration
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -10,13 +10,14 @@
     "frontendDist": "../ui"
   },
   "app": {
+    "enableGTKAppId": false,
     "windows": [
       {
         "title": "Konvertierung Audio-Video",
         "width": 900,
         "height": 620,
         "resizable": true,
-        "skipTaskbar": true
+        "skipTaskbar": false
       }
     ]
   },
@@ -25,6 +26,14 @@
     "targets": ["deb", "rpm"],
     "icon": [
       "icons/icon.png"
-    ]
+    ],
+    "linux": {
+      "deb": {
+        "desktopTemplate": "desktop/main.desktop"
+      },
+      "rpm": {
+        "desktopTemplate": "desktop/main.desktop"
+      }
+    }
   }
 }

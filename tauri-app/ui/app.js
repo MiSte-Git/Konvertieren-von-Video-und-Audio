@@ -14,13 +14,33 @@ const statusEl = document.getElementById("status");
 const startBtn = document.getElementById("startBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const appEl = document.querySelector(".app");
-const progressText = document.querySelector(".progress-text");
 const progressBar = document.querySelector(".progress-bar");
 const tauriEvent = window.__TAURI__?.event;
 const listen = tauriEvent?.listen;
 const internals = window.__TAURI_INTERNALS__;
 let lastAutoOutput = "";
 let progressTimer = null;
+let totalDurationSec = null;
+
+function formatHms(totalSeconds) {
+  if (!Number.isFinite(totalSeconds)) return "";
+  const secs = Math.max(0, Math.floor(totalSeconds));
+  const hh = String(Math.floor(secs / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+}
+
+function parseHmsToSeconds(value) {
+  if (!value) return null;
+  const match = /^(\d+):(\d{2}):(\d{2})(?:\.(\d+))?$/.exec(value.trim());
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  const s = Number(match[3]);
+  if (!Number.isFinite(h) || !Number.isFinite(m) || !Number.isFinite(s)) return null;
+  return h * 3600 + m * 60 + s;
+}
 
 function getMode() {
   const checked = document.querySelector('input[name="mode"]:checked');
@@ -40,9 +60,6 @@ function setRunning(running) {
   document.body.classList.toggle("is-running", running);
   if (appEl) {
     appEl.setAttribute("aria-busy", running ? "true" : "false");
-  }
-  if (progressText) {
-    progressText.textContent = running ? "Bitte warten ..." : "Bereit.";
   }
   if (!running && progressTimer) {
     clearInterval(progressTimer);
@@ -118,6 +135,8 @@ function formatTimeFromMs(value) {
 function updateProgressUI(values) {
   if (!values) return;
   const time = values.out_time || formatTimeFromMs(values.out_time_ms);
+  const elapsed =
+    values.out_time ? parseHmsToSeconds(values.out_time) : Math.floor(Number(values.out_time_ms || 0) / 1000000);
   const size = values.total_size ? formatBytes(values.total_size) : "";
   const speed = values.speed || "";
   const bitrate = values.bitrate || "";
@@ -127,11 +146,15 @@ function updateProgressUI(values) {
   if (bitrate) parts.push(`bitrate=${bitrate}`);
   if (speed) parts.push(`speed=${speed}`);
   const text = parts.length ? parts.join(" ") : "Bitte warten ...";
-  if (progressText) {
-    progressText.textContent = text;
-  }
   if (document.body.classList.contains("is-running")) {
-    setStatus(text);
+    if (Number.isFinite(totalDurationSec) && Number.isFinite(elapsed)) {
+      const total = formatHms(totalDurationSec);
+      const done = formatHms(elapsed);
+      const remaining = formatHms(Math.max(0, totalDurationSec - elapsed));
+      setStatus(`${done} / ${total} (rest ${remaining})`);
+    } else {
+      setStatus(text);
+    }
   }
   if (progressBar) {
     progressBar.style.opacity = values.progress === "end" ? "0.5" : "1";
@@ -238,6 +261,14 @@ async function start() {
     return;
   }
 
+  totalDurationSec = null;
+  try {
+    const dur = await invoke("get_media_duration", { input });
+    if (Number.isFinite(dur) && dur > 0) totalDurationSec = dur;
+  } catch {
+    totalDurationSec = null;
+  }
+
   setStatus("Konvertierung läuft ...");
   setRunning(true);
   startProgressPolling();
@@ -251,6 +282,7 @@ async function start() {
   } finally {
     startBtn.disabled = false;
     cancelBtn.disabled = true;
+    totalDurationSec = null;
     setRunning(false);
   }
 }
@@ -302,6 +334,18 @@ async function listenEvent(name, handler) {
 listenEvent("ffmpeg_progress", (event) => {
   const payload = event?.payload?.values || event?.payload || event?.values;
   updateProgressUI(payload);
+});
+listenEvent("lame_warning", async (event) => {
+  const message = event?.payload || "LAME-Prüfung fehlgeschlagen.";
+  if (dialog?.message) {
+    await dialog.message(message, { title: "LAME-Prüfung", type: "warning" });
+    return;
+  }
+  if (dialog?.alert) {
+    await dialog.alert(message);
+    return;
+  }
+  setStatus(`Warnung: ${message}`);
 });
 startBtn.addEventListener("click", start);
 cancelBtn.addEventListener("click", async () => {
