@@ -13,6 +13,7 @@ const clipEnd = document.getElementById("clipEnd");
 const statusEl = document.getElementById("status");
 const startBtn = document.getElementById("startBtn");
 const cancelBtn = document.getElementById("cancelBtn");
+const logBtn = document.getElementById("logBtn");
 const appEl = document.querySelector(".app");
 const progressBar = document.querySelector(".progress-bar");
 const tauriEvent = window.__TAURI__?.event;
@@ -29,6 +30,11 @@ function formatHms(totalSeconds) {
   const mm = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
   const ss = String(secs % 60).padStart(2, "0");
   return `${hh}:${mm}:${ss}`;
+}
+
+function formatElapsedMs(ms) {
+  const secs = Math.max(0, Math.round(ms / 1000));
+  return formatHms(secs);
 }
 
 function parseHmsToSeconds(value) {
@@ -232,6 +238,7 @@ async function start() {
   }
 
   if (mode === "clip") {
+    const startedAt = Date.now();
     const start = clipStart.value.trim();
     const end = clipEnd.value.trim();
     if (!start || !end || !isTime(start) || !isTime(end)) {
@@ -250,7 +257,8 @@ async function start() {
       } else {
         await invoke("clip_media", { input, output, start, end });
       }
-      setStatus("Fertig.");
+      const elapsed = formatElapsedMs(Date.now() - startedAt);
+      setStatus(`Fertig in ${elapsed}.`);
     } catch (err) {
       setStatus(`Fehler: ${err}`);
     } finally {
@@ -274,9 +282,11 @@ async function start() {
   startProgressPolling();
   startBtn.disabled = true;
   cancelBtn.disabled = false;
+  const startedAt = Date.now();
   try {
     await invoke("convert_media", { mode, input, output });
-    setStatus("Fertig.");
+    const elapsed = formatElapsedMs(Date.now() - startedAt);
+    setStatus(`Fertig in ${elapsed}.`);
   } catch (err) {
     setStatus(`Fehler: ${err}`);
   } finally {
@@ -359,5 +369,22 @@ cancelBtn.addEventListener("click", async () => {
     setStatus(`Fehler: ${err}`);
   } finally {
     setRunning(false);
+  }
+});
+
+logBtn.addEventListener("click", async () => {
+  if (!invoke) return;
+  try {
+    const logPath = await invoke("get_log_path");
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(logPath);
+    }
+    if (dialog?.message) {
+      await dialog.message(`Logfile: ${logPath}\n(Pfad wurde kopiert.)`, { title: "Log-Pfad", type: "info" });
+      return;
+    }
+    setStatus(`Logfile: ${logPath}`);
+  } catch (err) {
+    setStatus(`Fehler: ${err}`);
   }
 });

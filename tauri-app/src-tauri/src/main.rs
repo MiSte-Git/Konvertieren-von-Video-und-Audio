@@ -1,7 +1,12 @@
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use std::sync::{Arc, Mutex};
 use serde::Serialize;
@@ -11,6 +16,48 @@ use tauri::image::Image;
 struct AppState {
     current_pid: Arc<Mutex<Option<u32>>>,
     progress: Arc<Mutex<Option<HashMap<String, String>>>>,
+}
+
+fn apply_no_window(cmd: &mut Command) {
+    #[cfg(target_os = "windows")]
+    {
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+}
+
+fn log_line(app: &AppHandle, message: &str) {
+    let dir = app
+        .path()
+        .app_log_dir()
+        .or_else(|_| app.path().app_data_dir());
+    let dir = match dir {
+        Ok(d) => d,
+        Err(_) => return,
+    };
+    if std::fs::create_dir_all(&dir).is_err() {
+        return;
+    }
+    let log_path = dir.join("konvertierung.log");
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let line = format!("[{}] {}\n", now, message);
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(log_path) {
+        let _ = file.write_all(line.as_bytes());
+    }
+}
+
+#[tauri::command]
+fn get_log_path(app: AppHandle) -> Result<String, String> {
+    let dir = app
+        .path()
+        .app_log_dir()
+        .or_else(|_| app.path().app_data_dir())
+        .map_err(|_| "Log-Pfad konnte nicht bestimmt werden.".to_string())?;
+    let log_path = dir.join("konvertierung.log");
+    Ok(log_path.to_string_lossy().to_string())
 }
 
 fn os_subdir() -> &'static str {
@@ -96,6 +143,7 @@ fn run_ffmpeg(
         args.push(output);
     }
     let mut cmd = Command::new(&args[0]);
+    apply_no_window(&mut cmd);
     cmd.args(&args[1..]).stdout(Stdio::piped()).stderr(Stdio::inherit());
     let mut child = cmd.spawn().map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
     {
@@ -147,6 +195,7 @@ fn run_ffmpeg_lame(
     }
 
     let mut ffmpeg_cmd = Command::new(&ffmpeg_args[0]);
+    apply_no_window(&mut ffmpeg_cmd);
     ffmpeg_cmd
         .args(&ffmpeg_args[1..])
         .stdout(Stdio::piped())
@@ -165,6 +214,7 @@ fn run_ffmpeg_lame(
         .take()
         .ok_or("ffmpeg-stdout nicht verfügbar".to_string())?;
     let mut lame_cmd = Command::new(&lame_args[0]);
+    apply_no_window(&mut lame_cmd);
     lame_cmd
         .args(&lame_args[1..])
         .stdin(Stdio::from(ffmpeg_stdout))
@@ -255,13 +305,17 @@ fn extract_version_token(input: &str) -> Option<String> {
 }
 
 fn get_lame_version() -> Option<String> {
-    let output = Command::new("lame").arg("--version").output().ok()?;
+    let mut cmd = Command::new("lame");
+    apply_no_window(&mut cmd);
+    let output = cmd.arg("--version").output().ok()?;
     let text = String::from_utf8_lossy(&output.stdout);
     extract_version_token(&text)
 }
 
 fn verify_lame_output(path: &str) -> Result<(), String> {
-    let output = Command::new("ffprobe")
+    let mut cmd = Command::new("ffprobe");
+    apply_no_window(&mut cmd);
+    let output = cmd
         .args([
             "-v", "error",
             "-show_entries", "format_tags=encoder:stream_tags=encoder",
@@ -295,7 +349,9 @@ fn get_media_duration(input: String) -> Result<f64, String> {
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
-    let output = Command::new("ffprobe")
+    let mut cmd = Command::new("ffprobe");
+    apply_no_window(&mut cmd);
+    let output = cmd
         .args([
             "-v", "error",
             "-show_entries", "format=duration",
@@ -327,7 +383,9 @@ fn kill_pid(pid: u32) -> Result<(), String> {
 
 #[cfg(target_family = "windows")]
 fn kill_pid(pid: u32) -> Result<(), String> {
-    let status = Command::new("taskkill")
+    let mut cmd = Command::new("taskkill");
+    apply_no_window(&mut cmd);
+    let status = cmd
         .args(["/PID", &pid.to_string(), "/T", "/F"])
         .status()
         .map_err(|e| format!("taskkill fehlgeschlagen: {e}"))?;
@@ -364,6 +422,8 @@ async fn convert_media(
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<(), String> {
+    let started = Instant::now();
+    log_line(&app, &format!("convert start mode={} input={} output={}", mode, input, output));
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
@@ -396,7 +456,7 @@ async fn convert_media(
     let current_pid = state.current_pid.clone();
     let progress_state = state.progress.clone();
     let app_handle = app.clone();
-    tauri::async_runtime::spawn_blocking(move || {
+    let result = tauri::async_runtime::spawn_blocking(move || {
         if mode == "v2mp3" || mode == "a2mp3" {
             let output_path = output.clone();
             let lame_args = vec![
@@ -420,8 +480,20 @@ async fn convert_media(
             run_ffmpeg(args_owned, current_pid, progress_state, app_handle)
         }
     })
-        .await
-        .map_err(|e| e.to_string())?
+    .await
+    .map_err(|e| e.to_string())?;
+
+    match result {
+        Ok(()) => {
+            let elapsed = started.elapsed().as_secs();
+            log_line(&app, &format!("convert done elapsed_sec={}", elapsed));
+            Ok(())
+        }
+        Err(err) => {
+            log_line(&app, &format!("convert error={}", err));
+            Err(err)
+        }
+    }
 }
 
 #[tauri::command]
@@ -433,6 +505,8 @@ async fn clip_media(
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<(), String> {
+    let started_at = Instant::now();
+    log_line(&app, &format!("clip start input={} output={} start={} end={}", input, output, start, end));
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
@@ -451,11 +525,23 @@ async fn clip_media(
     let current_pid = state.current_pid.clone();
     let progress_state = state.progress.clone();
     let app_handle = app.clone();
-    tauri::async_runtime::spawn_blocking(move || {
+    let result = tauri::async_runtime::spawn_blocking(move || {
         run_ffmpeg(args_owned, current_pid, progress_state, app_handle)
     })
-        .await
-        .map_err(|e| e.to_string())?
+    .await
+    .map_err(|e| e.to_string())?;
+
+    match result {
+        Ok(()) => {
+            let elapsed = started_at.elapsed().as_secs();
+            log_line(&app, &format!("clip done elapsed_sec={}", elapsed));
+            Ok(())
+        }
+        Err(err) => {
+            log_line(&app, &format!("clip error={}", err));
+            Err(err)
+        }
+    }
 }
 
 #[tauri::command]
@@ -467,6 +553,8 @@ async fn remove_clip(
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<(), String> {
+    let started_at = Instant::now();
+    log_line(&app, &format!("remove start input={} output={} start={} end={}", input, output, start, end));
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
@@ -522,14 +610,26 @@ async fn remove_clip(
     let current_pid = state.current_pid.clone();
     let progress_state = state.progress.clone();
     let app_handle = app.clone();
-    tauri::async_runtime::spawn_blocking(move || {
+    let result = tauri::async_runtime::spawn_blocking(move || {
         for cmd in cmds {
             run_ffmpeg(cmd, current_pid.clone(), progress_state.clone(), app_handle.clone())?;
         }
         Ok(())
     })
     .await
-    .map_err(|e| e.to_string())?
+    .map_err(|e| e.to_string())?;
+
+    match result {
+        Ok(()) => {
+            let elapsed = started_at.elapsed().as_secs();
+            log_line(&app, &format!("remove done elapsed_sec={}", elapsed));
+            Ok(())
+        }
+        Err(err) => {
+            log_line(&app, &format!("remove error={}", err));
+            Err(err)
+        }
+    }
 }
 
 fn main() {
@@ -555,7 +655,8 @@ fn main() {
             remove_clip,
             cancel_current,
             get_progress,
-            get_media_duration
+            get_media_duration,
+            get_log_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
