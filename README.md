@@ -28,9 +28,24 @@ winget install --id Microsoft.VisualStudio.2022.BuildTools -e
 # WebView2 Runtime
 winget install --id Microsoft.EdgeWebView2Runtime -e
 
-# WiX (nur fuer MSI)
+# WiX (optional, nur fuer MSI-Installer)
 winget install --id WiXToolset.WiXToolset -e
 ```
+
+Build (Windows, PowerShell):
+```powershell
+powershell .\build-windows-app.ps1
+```
+
+Install (portable EXE + Startmenueintrag):
+```powershell
+powershell .\install-windows.ps1
+```
+
+Hinweise (Windows):
+- Das Build-Skript installiert Rust (cargo) auf Wunsch via winget.
+- tauri-cli wird bei Bedarf via cargo installiert.
+- Visual Studio Build Tools und WebView2 Runtime muessen vorher vorhanden sein.
 
 macOS:
 ```bash

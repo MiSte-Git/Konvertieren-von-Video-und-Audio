@@ -12,14 +12,28 @@ function Assert-File($p, $msg) {
   if (-not (Test-Path $p)) { throw $msg }
 }
 
+function Resolve-RepoRoot {
+  Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+
+function Get-LatestExe($exeDir) {
+  return Get-ChildItem -Path $exeDir -Filter "*.exe" -File -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 1
+}
+
 # In Repo-Root arbeiten (wo das Script liegt)
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = Resolve-RepoRoot
 Set-Location $ScriptDir
 
 if ([string]::IsNullOrWhiteSpace($SourceExe)) {
-  $SourceExe = Join-Path (Join-Path (Get-Location) "dist") "$AppName.exe"
+  $releaseDir = Join-Path $ScriptDir "tauri-app\\target\\release"
+  $latestExe = Get-LatestExe $releaseDir
+  if (-not $latestExe) {
+    throw "EXE nicht gefunden in $releaseDir. Bitte zuerst in tauri-app 'cargo tauri build' ausführen."
+  }
+  $SourceExe = $latestExe.FullName
 }
-Assert-File $SourceExe "EXE nicht gefunden: $SourceExe. Bitte zuerst pyinstaller-windows.ps1 ausführen."
+Assert-File $SourceExe "EXE nicht gefunden: $SourceExe"
 
 # Installationsziel
 if ($AllUsers) {
@@ -30,12 +44,13 @@ if ($AllUsers) {
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
-# Copy EXE
-Copy-Item -Force $SourceExe (Join-Path $InstallDir "$AppName.exe")
+$ExeName = [System.IO.Path]::GetFileName($SourceExe)
+Copy-Item -Force $SourceExe (Join-Path $InstallDir $ExeName)
 
-# Optional: zusätzliche Ordner, falls du zur Laufzeit externe Dateien brauchst
-if (Test-Path "bin") {
-  Copy-Item -Recurse -Force "bin" (Join-Path $InstallDir "bin")
+# Optional: zusätzliche Binärdateien (z.B. ffmpeg) neben die EXE legen
+$BinSource = Join-Path $ScriptDir "tauri-app\\bin"
+if (Test-Path $BinSource) {
+  Copy-Item -Recurse -Force $BinSource (Join-Path $InstallDir "bin")
 }
 
 # Startmenü-Verknüpfung
@@ -52,7 +67,7 @@ New-Item -ItemType Directory -Force -Path $ShortcutDir | Out-Null
 
 $ShortcutPath = Join-Path $ShortcutDir "$AppName.lnk"
 $Shortcut = $Shell.CreateShortcut($ShortcutPath)
-$Shortcut.TargetPath = (Join-Path $InstallDir "$AppName.exe")
+$Shortcut.TargetPath = (Join-Path $InstallDir $ExeName)
 $Shortcut.WorkingDirectory = $InstallDir
 $Shortcut.IconLocation = $Shortcut.TargetPath
 $Shortcut.Save()
