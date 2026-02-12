@@ -95,6 +95,23 @@ cd tauri-app
 cargo tauri build
 ```
 
+Linux: .deb oder .rpm installieren (nach Build):
+```bash
+# .deb (Debian/Ubuntu)
+sudo dpkg -i tauri-app/src-tauri/target/release/bundle/deb/*.deb
+
+# .rpm (Fedora/RHEL/openSUSE)
+sudo rpm -i tauri-app/src-tauri/target/release/bundle/rpm/*.rpm
+```
+Hinweis: Falls Abhaengigkeiten fehlen, danach `sudo apt -f install` (deb) bzw. `sudo dnf -y install` (rpm) ausfuehren.
+
+Windows: EXE bauen und installieren (portable + Startmenueintrag):
+```powershell
+powershell .\build-windows-app.ps1
+powershell .\install-windows.ps1
+```
+Hinweis: Die EXE liegt nach dem Build unter `tauri-app\src-tauri\target\release\` (z.B. `konvertierung.exe`).
+
 ## Bash-Skript (Linux)
 Voraussetzungen: `ffmpeg`, `lame`, `zenity`
 
