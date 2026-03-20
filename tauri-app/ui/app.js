@@ -14,6 +14,7 @@ const statusEl = document.getElementById("status");
 const startBtn = document.getElementById("startBtn");
 const cancelBtn = document.getElementById("cancelBtn");
 const logBtn = document.getElementById("logBtn");
+const browseOutputBtn = document.getElementById("browseOutput");
 const appEl = document.querySelector(".app");
 const progressBar = document.querySelector(".progress-bar");
 const tauriEvent = window.__TAURI__?.event;
@@ -22,6 +23,10 @@ const internals = window.__TAURI_INTERNALS__;
 let lastAutoOutput = "";
 let progressTimer = null;
 let totalDurationSec = null;
+let selectedInputs = [];
+let cancelRequested = false;
+let currentBatchIndex = 0;
+let currentBatchTotal = 0;
 
 function formatHms(totalSeconds) {
   if (!Number.isFinite(totalSeconds)) return "";
@@ -58,8 +63,23 @@ function getClipMode() {
   return checked ? checked.value : "only";
 }
 
+function isMp3Mode(mode = getMode()) {
+  return mode === "v2mp3" || mode === "a2mp3";
+}
+
+function isBatchMp3Mode() {
+  return isMp3Mode() && selectedInputs.length > 1;
+}
+
 function setStatus(text) {
   statusEl.textContent = text;
+}
+
+function batchStatusSuffix() {
+  if (currentBatchTotal > 1 && currentBatchIndex > 0) {
+    return ` Datei ${currentBatchIndex}/${currentBatchTotal}`;
+  }
+  return "";
 }
 
 function setRunning(running) {
@@ -104,6 +124,40 @@ function defaultOutput(input, mode, clipMode) {
   const ext = mode === "divx" ? "_DivX.avi" : "_LAME.mp3";
   const name = `${stem}${ext}`;
   return dir ? `${dir}${sep}${name}` : name;
+}
+
+function setInputSelection(paths) {
+  selectedInputs = Array.isArray(paths) ? paths.filter(Boolean) : [];
+  if (selectedInputs.length > 1) {
+    inputPath.value = `${selectedInputs.length} Dateien ausgewählt`;
+    inputPath.title = selectedInputs.join("\n");
+    return;
+  }
+
+  const single = selectedInputs[0] || "";
+  inputPath.value = single;
+  inputPath.title = single;
+}
+
+function getInputList() {
+  if (selectedInputs.length > 0) {
+    return [...selectedInputs];
+  }
+  const manualInput = inputPath.value.trim();
+  return manualInput ? [manualInput] : [];
+}
+
+function updateOutputControls() {
+  const disableOutput = isBatchMp3Mode();
+  outputPath.disabled = disableOutput;
+  browseOutputBtn.disabled = disableOutput;
+  outputPath.placeholder = disableOutput
+    ? "Wird pro Datei automatisch erzeugt"
+    : "Zieldatei (optional)";
+  if (disableOutput) {
+    outputPath.value = "";
+    lastAutoOutput = "";
+  }
 }
 
 function isTime(value) {
@@ -157,9 +211,9 @@ function updateProgressUI(values) {
       const total = formatHms(totalDurationSec);
       const done = formatHms(elapsed);
       const remaining = formatHms(Math.max(0, totalDurationSec - elapsed));
-      setStatus(`${done} / ${total} (rest ${remaining})`);
+      setStatus(`${done} / ${total} (rest ${remaining})${batchStatusSuffix()}`);
     } else {
-      setStatus(text);
+      setStatus(`${text}${batchStatusSuffix()}`);
     }
   }
   if (progressBar) {
@@ -196,13 +250,22 @@ async function dialogSave(options = {}) {
 
 async function pickInput() {
   if (!invoke && !dialog?.open) return;
+  const mode = getMode();
   const selected = await dialogOpen({
-    multiple: false,
+    multiple: isMp3Mode(mode),
     filters: [{ name: "Video/Audio", extensions: ["mp4", "m4a", "avi", "mkv", "mov", "mp3", "wav"] }],
   });
   if (!selected) return;
-  const path = Array.isArray(selected) ? selected[0] : selected;
-  inputPath.value = path;
+  const paths = Array.isArray(selected) ? selected : [selected];
+  setInputSelection(paths);
+  updateOutputControls();
+
+  if (paths.length > 1 && isMp3Mode(mode)) {
+    setStatus(`${paths.length} Dateien ausgewählt. Ausgabe erfolgt je Datei neben der Quelle.`);
+    return;
+  }
+
+  const path = paths[0];
   const proposed = defaultOutput(path, getMode(), getClipMode());
   if (!outputPath.value || outputPath.value === lastAutoOutput) {
     outputPath.value = proposed;
@@ -224,17 +287,24 @@ async function pickOutput() {
 async function start() {
   if (!invoke) return;
   const mode = getMode();
-  const input = inputPath.value.trim();
-  let output = outputPath.value.trim();
+  const inputs = getInputList();
+  cancelRequested = false;
+  currentBatchIndex = 0;
+  currentBatchTotal = 0;
 
-  if (!input) {
-    setStatus("Bitte eine Quelldatei wählen.");
+  if (!inputs.length) {
+    setStatus(isMp3Mode(mode) ? "Bitte mindestens eine Quelldatei wählen." : "Bitte eine Quelldatei wählen.");
     return;
   }
 
+  const input = inputs[0];
+  let output = outputPath.value.trim();
+
   if (!output) {
     output = defaultOutput(input, mode, getClipMode());
-    outputPath.value = output;
+    if (!isBatchMp3Mode()) {
+      outputPath.value = output;
+    }
   }
 
   if (mode === "clip") {
@@ -260,7 +330,7 @@ async function start() {
       const elapsed = formatElapsedMs(Date.now() - startedAt);
       setStatus(`Fertig in ${elapsed}.`);
     } catch (err) {
-      setStatus(`Fehler: ${err}`);
+      setStatus(cancelRequested ? "Abgebrochen." : `Fehler: ${err}`);
     } finally {
       startBtn.disabled = false;
       cancelBtn.disabled = true;
@@ -269,39 +339,86 @@ async function start() {
     return;
   }
 
-  totalDurationSec = null;
-  try {
-    const dur = await invoke("get_media_duration", { input });
-    if (Number.isFinite(dur) && dur > 0) totalDurationSec = dur;
-  } catch {
-    totalDurationSec = null;
-  }
-
-  setStatus("Konvertierung läuft ...");
   setRunning(true);
-  startProgressPolling();
   startBtn.disabled = true;
   cancelBtn.disabled = false;
-  const startedAt = Date.now();
+
   try {
+    if (isMp3Mode(mode) && inputs.length > 1) {
+      const startedAt = Date.now();
+      currentBatchTotal = inputs.length;
+      for (let index = 0; index < inputs.length; index += 1) {
+        if (cancelRequested) break;
+        const currentInput = inputs[index];
+        const currentOutput = defaultOutput(currentInput, mode, getClipMode());
+        currentBatchIndex = index + 1;
+        totalDurationSec = null;
+        try {
+          const dur = await invoke("get_media_duration", { input: currentInput });
+          if (Number.isFinite(dur) && dur > 0) totalDurationSec = dur;
+        } catch {
+          totalDurationSec = null;
+        }
+        if (cancelRequested) break;
+
+        setStatus(`Datei ${currentBatchIndex}/${currentBatchTotal}`);
+        startProgressPolling();
+        await invoke("convert_media", {
+          mode,
+          input: currentInput,
+          output: currentOutput,
+        });
+      }
+
+      if (cancelRequested) {
+        setStatus("Abgebrochen.");
+      } else {
+        const elapsed = formatElapsedMs(Date.now() - startedAt);
+        setStatus(`${inputs.length} Dateien fertig in ${elapsed}.`);
+      }
+      return;
+    }
+
+    totalDurationSec = null;
+    try {
+      const dur = await invoke("get_media_duration", { input });
+      if (Number.isFinite(dur) && dur > 0) totalDurationSec = dur;
+    } catch {
+      totalDurationSec = null;
+    }
+    if (cancelRequested) {
+      setStatus("Abgebrochen.");
+      return;
+    }
+
+    setStatus("Konvertierung läuft ...");
+    startProgressPolling();
+    const startedAt = Date.now();
     await invoke("convert_media", { mode, input, output });
     const elapsed = formatElapsedMs(Date.now() - startedAt);
     setStatus(`Fertig in ${elapsed}.`);
   } catch (err) {
-    setStatus(`Fehler: ${err}`);
+    setStatus(cancelRequested ? "Abgebrochen." : `Fehler: ${err}`);
   } finally {
     startBtn.disabled = false;
     cancelBtn.disabled = true;
     totalDurationSec = null;
+    currentBatchIndex = 0;
+    currentBatchTotal = 0;
     setRunning(false);
   }
 }
 
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
   radio.addEventListener("change", () => {
+    if (selectedInputs.length > 1 && !isMp3Mode(getMode())) {
+      setInputSelection(selectedInputs.slice(0, 1));
+    }
     updateClipVisibility();
-    if (inputPath.value) {
-      const proposed = defaultOutput(inputPath.value, getMode(), getClipMode());
+    updateOutputControls();
+    const inputs = getInputList();
+    if (inputs.length && !isBatchMp3Mode()) {
+      const proposed = defaultOutput(inputs[0], getMode(), getClipMode());
       if (!outputPath.value || outputPath.value === lastAutoOutput) {
         outputPath.value = proposed;
       }
@@ -312,8 +429,9 @@ for (const radio of document.querySelectorAll('input[name="mode"]')) {
 
 for (const radio of document.querySelectorAll('input[name="clipMode"]')) {
   radio.addEventListener("change", () => {
-    if (inputPath.value) {
-      const proposed = defaultOutput(inputPath.value, getMode(), getClipMode());
+    const inputs = getInputList();
+    if (inputs.length && !isBatchMp3Mode()) {
+      const proposed = defaultOutput(inputs[0], getMode(), getClipMode());
       if (!outputPath.value || outputPath.value === lastAutoOutput) {
         outputPath.value = proposed;
       }
@@ -323,9 +441,15 @@ for (const radio of document.querySelectorAll('input[name="clipMode"]')) {
 }
 
 updateClipVisibility();
+updateOutputControls();
 
 document.getElementById("browseInput").addEventListener("click", pickInput);
 document.getElementById("browseOutput").addEventListener("click", pickOutput);
+inputPath.addEventListener("input", () => {
+  selectedInputs = [];
+  inputPath.title = inputPath.value.trim();
+  updateOutputControls();
+});
 outputPath.addEventListener("input", () => {
   lastAutoOutput = "";
 });
@@ -360,15 +484,14 @@ listenEvent("lame_warning", async (event) => {
 startBtn.addEventListener("click", start);
 cancelBtn.addEventListener("click", async () => {
   if (!invoke) return;
+  cancelRequested = true;
   cancelBtn.disabled = true;
   setStatus("Abbruch wird angefordert ...");
   try {
     await invoke("cancel_current");
-    setStatus("Abgebrochen.");
+    setStatus("Abbruch wird ausgeführt ...");
   } catch (err) {
-    setStatus(`Fehler: ${err}`);
-  } finally {
-    setRunning(false);
+    setStatus(cancelRequested ? "Abbruch vorgemerkt ..." : `Fehler: ${err}`);
   }
 });
 

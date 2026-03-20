@@ -18,11 +18,11 @@ struct AppState {
     progress: Arc<Mutex<Option<HashMap<String, String>>>>,
 }
 
-fn apply_no_window(cmd: &mut Command) {
+fn apply_no_window(_cmd: &mut Command) {
     #[cfg(target_os = "windows")]
     {
         const CREATE_NO_WINDOW: u32 = 0x08000000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
+        _cmd.creation_flags(CREATE_NO_WINDOW);
     }
 }
 
