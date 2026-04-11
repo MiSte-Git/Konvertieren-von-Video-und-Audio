@@ -63,12 +63,12 @@ function getClipMode() {
   return checked ? checked.value : "only";
 }
 
-function isMp3Mode(mode = getMode()) {
-  return mode === "v2mp3" || mode === "a2mp3";
+function supportsBatchMode(mode = getMode()) {
+  return mode === "v2mp3" || mode === "a2mp3" || mode === "divx";
 }
 
-function isBatchMp3Mode() {
-  return isMp3Mode() && selectedInputs.length > 1;
+function isBatchModeActive() {
+  return supportsBatchMode() && selectedInputs.length > 1;
 }
 
 function setStatus(text) {
@@ -148,7 +148,7 @@ function getInputList() {
 }
 
 function updateOutputControls() {
-  const disableOutput = isBatchMp3Mode();
+  const disableOutput = isBatchModeActive();
   outputPath.disabled = disableOutput;
   browseOutputBtn.disabled = disableOutput;
   outputPath.placeholder = disableOutput
@@ -252,7 +252,7 @@ async function pickInput() {
   if (!invoke && !dialog?.open) return;
   const mode = getMode();
   const selected = await dialogOpen({
-    multiple: isMp3Mode(mode),
+    multiple: supportsBatchMode(mode),
     filters: [{ name: "Video/Audio", extensions: ["mp4", "m4a", "avi", "mkv", "mov", "mp3", "wav"] }],
   });
   if (!selected) return;
@@ -260,7 +260,7 @@ async function pickInput() {
   setInputSelection(paths);
   updateOutputControls();
 
-  if (paths.length > 1 && isMp3Mode(mode)) {
+  if (paths.length > 1 && supportsBatchMode(mode)) {
     setStatus(`${paths.length} Dateien ausgewählt. Ausgabe erfolgt je Datei neben der Quelle.`);
     return;
   }
@@ -293,7 +293,7 @@ async function start() {
   currentBatchTotal = 0;
 
   if (!inputs.length) {
-    setStatus(isMp3Mode(mode) ? "Bitte mindestens eine Quelldatei wählen." : "Bitte eine Quelldatei wählen.");
+    setStatus(supportsBatchMode(mode) ? "Bitte mindestens eine Quelldatei wählen." : "Bitte eine Quelldatei wählen.");
     return;
   }
 
@@ -302,7 +302,7 @@ async function start() {
 
   if (!output) {
     output = defaultOutput(input, mode, getClipMode());
-    if (!isBatchMp3Mode()) {
+    if (!isBatchModeActive()) {
       outputPath.value = output;
     }
   }
@@ -344,7 +344,7 @@ async function start() {
   cancelBtn.disabled = false;
 
   try {
-    if (isMp3Mode(mode) && inputs.length > 1) {
+    if (supportsBatchMode(mode) && inputs.length > 1) {
       const startedAt = Date.now();
       currentBatchTotal = inputs.length;
       for (let index = 0; index < inputs.length; index += 1) {
@@ -411,13 +411,13 @@ async function start() {
 
 for (const radio of document.querySelectorAll('input[name="mode"]')) {
   radio.addEventListener("change", () => {
-    if (selectedInputs.length > 1 && !isMp3Mode(getMode())) {
+    if (selectedInputs.length > 1 && !supportsBatchMode(getMode())) {
       setInputSelection(selectedInputs.slice(0, 1));
     }
     updateClipVisibility();
     updateOutputControls();
     const inputs = getInputList();
-    if (inputs.length && !isBatchMp3Mode()) {
+    if (inputs.length && !isBatchModeActive()) {
       const proposed = defaultOutput(inputs[0], getMode(), getClipMode());
       if (!outputPath.value || outputPath.value === lastAutoOutput) {
         outputPath.value = proposed;
@@ -430,7 +430,7 @@ for (const radio of document.querySelectorAll('input[name="mode"]')) {
 for (const radio of document.querySelectorAll('input[name="clipMode"]')) {
   radio.addEventListener("change", () => {
     const inputs = getInputList();
-    if (inputs.length && !isBatchMp3Mode()) {
+    if (inputs.length && !isBatchModeActive()) {
       const proposed = defaultOutput(inputs[0], getMode(), getClipMode());
       if (!outputPath.value || outputPath.value === lastAutoOutput) {
         outputPath.value = proposed;
