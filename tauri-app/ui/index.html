@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>Konvertierung Audio-Video</title>
-    <link rel="stylesheet" href="style.css?v=4" />
+    <link rel="stylesheet" href="style.css?v=5" />
   </head>
   <body>
     <div class="app">
@@ -23,6 +23,20 @@
           <label><input type="radio" name="mode" value="a2mp3" /> Audio zu MP3</label>
           <label><input type="radio" name="mode" value="divx" /> Video zu AVI (DivX)</label>
           <label><input type="radio" name="mode" value="clip" /> Video-Ausschnitt</label>
+        </div>
+      </section>
+
+      <section id="audioOptionsSection" class="card">
+        <h2>Audio-Ausgabeoptionen</h2>
+        <div class="row">
+          <label for="audioAdjustment">Lautstärkeanpassung</label>
+          <select id="audioAdjustment">
+            <option value="none" title="Die Lautstärke wird nicht verändert.">Keine</option>
+            <option value="normalize" title="Passt die Gesamtlautheit der Datei an.">Normalisieren</option>
+            <option value="speech" title="Gleicht unterschiedliche Sprecherlautstärken aus und begrenzt Lautstärkespitzen.">Sprache ausgleichen</option>
+            <option value="strong" title="Für Aufnahmen mit sehr leisen Stimmen und plötzlich sehr lauten Passagen.">Starke Unterschiede ausgleichen</option>
+          </select>
+          <span id="audioAdjustmentHelp" class="field-help">Die Lautstärke wird nicht verändert.</span>
         </div>
       </section>
 
@@ -82,6 +96,6 @@
       </section>
     </div>
 
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=5"></script>
   </body>
 </html>

@@ -122,6 +122,71 @@ fn is_hh_mm_ss(value: &str) -> bool {
     }
 }
 
+fn get_audio_filter(mode: Option<&str>) -> Result<Option<&'static str>, String> {
+    match mode.unwrap_or("none") {
+        "none" => Ok(None),
+        "normalize" => Ok(Some("loudnorm=I=-16:LRA=11:TP=-1.5")),
+        "speech" => Ok(Some(
+            "dynaudnorm=f=500:g=15:p=0.9,acompressor=threshold=-18dB:ratio=3:attack=20:release=250,alimiter=limit=0.95",
+        )),
+        "strong" => Ok(Some(
+            "dynaudnorm=f=500:g=12:p=0.85,acompressor=threshold=-20dB:ratio=4:attack=15:release=300,alimiter=limit=0.90",
+        )),
+        _ => Err("Unbekannte Lautstärkeanpassung".into()),
+    }
+}
+
+fn build_audio_mp3_ffmpeg_args(
+    mode: &str,
+    input: &str,
+    audio_adjustment: Option<&str>,
+) -> Result<Vec<String>, String> {
+    let mut args: Vec<String> = match mode {
+        "v2mp3" => [
+            "ffmpeg",
+            "-y",
+            "-i",
+            input,
+            "-vn",
+            "-ar",
+            "44100",
+            "-ac",
+            "2",
+            "-nostats",
+            "-loglevel",
+            "error",
+            "-progress",
+            "pipe:2",
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect(),
+        "a2mp3" => [
+            "ffmpeg",
+            "-y",
+            "-i",
+            input,
+            "-vn",
+            "-nostats",
+            "-loglevel",
+            "error",
+            "-progress",
+            "pipe:2",
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect(),
+        _ => return Err("Unbekannter Modus".into()),
+    };
+
+    if let Some(filter) = get_audio_filter(audio_adjustment)? {
+        args.push("-af".to_string());
+        args.push(filter.to_string());
+    }
+    args.extend(["-f", "wav", "pipe:1"].into_iter().map(String::from));
+    Ok(args)
+}
+
 #[derive(Serialize, Clone)]
 struct FfmpegProgress {
     values: HashMap<String, String>,
@@ -224,11 +289,13 @@ fn run_ffmpeg_lame(
         .spawn()
         .map_err(|e| format!("lame konnte nicht gestartet werden: {e}"))?;
 
+    let mut ffmpeg_error_lines: Vec<String> = Vec::new();
     if let Some(stderr) = ffmpeg_child.stderr.take() {
         let reader = BufReader::new(stderr);
         let mut values: HashMap<String, String> = HashMap::new();
         for line in reader.lines() {
-            let line = line.map_err(|e| format!("ffmpeg-Ausgabe konnte nicht gelesen werden: {e}"))?;
+            let line =
+                line.map_err(|e| format!("ffmpeg-Ausgabe konnte nicht gelesen werden: {e}"))?;
             if let Some((key, value)) = line.split_once('=') {
                 values.insert(key.to_string(), value.to_string());
                 if let Ok(mut guard) = progress_state.lock() {
@@ -240,6 +307,8 @@ fn run_ffmpeg_lame(
                     };
                     let _ = app.emit("ffmpeg_progress", payload);
                 }
+            } else if !line.trim().is_empty() {
+                ffmpeg_error_lines.push(line);
             }
         }
     }
@@ -256,9 +325,15 @@ fn run_ffmpeg_lame(
         if let Ok(mut guard) = progress_state.lock() {
             *guard = None;
         }
+        let details = if ffmpeg_error_lines.is_empty() {
+            String::new()
+        } else {
+            format!(": {}", ffmpeg_error_lines.join("\n"))
+        };
         return Err(format!(
-            "ffmpeg fehlgeschlagen (Exit-Code {:?})",
-            ffmpeg_status.code()
+            "ffmpeg fehlgeschlagen (Exit-Code {:?}){}",
+            ffmpeg_status.code(),
+            details
         ));
     }
 
@@ -344,6 +419,72 @@ fn verify_lame_output(path: &str) -> Result<(), String> {
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn has_arg(args: &[String], value: &str) -> bool {
+        args.iter().any(|arg| arg == value)
+    }
+
+    #[test]
+    fn audio_filter_none_returns_no_filter() {
+        assert_eq!(get_audio_filter(None).unwrap(), None);
+        assert_eq!(get_audio_filter(Some("none")).unwrap(), None);
+    }
+
+    #[test]
+    fn audio_filter_modes_return_expected_ffmpeg_filters() {
+        assert_eq!(
+            get_audio_filter(Some("normalize")).unwrap(),
+            Some("loudnorm=I=-16:LRA=11:TP=-1.5")
+        );
+        assert_eq!(
+            get_audio_filter(Some("speech")).unwrap(),
+            Some("dynaudnorm=f=500:g=15:p=0.9,acompressor=threshold=-18dB:ratio=3:attack=20:release=250,alimiter=limit=0.95")
+        );
+        assert_eq!(
+            get_audio_filter(Some("strong")).unwrap(),
+            Some("dynaudnorm=f=500:g=12:p=0.85,acompressor=threshold=-20dB:ratio=4:attack=15:release=300,alimiter=limit=0.90")
+        );
+    }
+
+    #[test]
+    fn audio_filter_rejects_unknown_mode() {
+        assert!(get_audio_filter(Some("invalid")).is_err());
+    }
+
+    #[test]
+    fn audio_mp3_args_omit_af_for_none() {
+        let args = build_audio_mp3_ffmpeg_args("v2mp3", "/tmp/in file.mp4", Some("none")).unwrap();
+        assert!(!has_arg(&args, "-af"));
+        assert_eq!(args.last().map(String::as_str), Some("pipe:1"));
+    }
+
+    #[test]
+    fn audio_mp3_args_include_filter_for_video_to_mp3() {
+        let args =
+            build_audio_mp3_ffmpeg_args("v2mp3", "/tmp/in file.mp4", Some("speech")).unwrap();
+        let af_pos = args.iter().position(|arg| arg == "-af").unwrap();
+        assert_eq!(
+            args.get(af_pos + 1).map(String::as_str),
+            get_audio_filter(Some("speech")).unwrap()
+        );
+        assert!(af_pos < args.iter().position(|arg| arg == "-f").unwrap());
+    }
+
+    #[test]
+    fn audio_mp3_args_include_filter_for_audio_to_mp3() {
+        let args =
+            build_audio_mp3_ffmpeg_args("a2mp3", "/tmp/in file.wav", Some("strong")).unwrap();
+        let af_pos = args.iter().position(|arg| arg == "-af").unwrap();
+        assert_eq!(
+            args.get(af_pos + 1).map(String::as_str),
+            get_audio_filter(Some("strong")).unwrap()
+        );
+    }
+}
+
 #[tauri::command]
 fn get_media_duration(input: String) -> Result<f64, String> {
     if !Path::new(&input).is_file() {
@@ -419,27 +560,30 @@ async fn convert_media(
     mode: String,
     input: String,
     output: String,
+    audio_adjustment: Option<String>,
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<(), String> {
     let started = Instant::now();
-    log_line(&app, &format!("convert start mode={} input={} output={}", mode, input, output));
+    log_line(
+        &app,
+        &format!(
+            "convert start mode={} audio_adjustment={} input={} output={}",
+            mode,
+            audio_adjustment.as_deref().unwrap_or("none"),
+            input,
+            output
+        ),
+    );
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
     ensure_output_dir(&output)?;
 
-    let args = match mode.as_str() {
-        "v2mp3" => vec![
-            "ffmpeg", "-y", "-i", &input, "-vn", "-ar", "44100", "-ac", "2",
-            "-nostats", "-loglevel", "error", "-progress", "pipe:2",
-            "-f", "wav", "pipe:1",
-        ],
-        "a2mp3" => vec![
-            "ffmpeg", "-y", "-i", &input, "-vn",
-            "-nostats", "-loglevel", "error", "-progress", "pipe:2",
-            "-f", "wav", "pipe:1",
-        ],
+    let args_owned = match mode.as_str() {
+        "v2mp3" | "a2mp3" => {
+            build_audio_mp3_ffmpeg_args(mode.as_str(), &input, audio_adjustment.as_deref())?
+        }
         "divx" => vec![
             "ffmpeg", "-y", "-hwaccel", "auto", "-fflags", "+genpts", "-i", &input,
             "-map", "0:v:0", "-map", "0:a:0", "-sn", "-dn",
@@ -448,11 +592,10 @@ async fn convert_media(
             "-c:a", "libmp3lame", "-b:a", "128k", "-ac", "2", "-ar", "44100",
             "-f", "avi", "-use_odml", "1", "-max_interleave_delta", "0", "-metadata", "title=film",
             &output,
-        ],
+        ].into_iter().map(String::from).collect(),
         _ => return Err("Unbekannter Modus".into()),
     };
 
-    let args_owned: Vec<String> = args.into_iter().map(|s| s.to_string()).collect();
     let current_pid = state.current_pid.clone();
     let progress_state = state.progress.clone();
     let app_handle = app.clone();

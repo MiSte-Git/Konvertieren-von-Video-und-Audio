@@ -73,13 +73,20 @@ header p {
   font-size: 14px;
 }
 
-input[type="text"] {
+input[type="text"],
+select {
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--line);
   font-size: 14px;
   background: #fcfbf8;
+}
+
+.field-help {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .with-info {

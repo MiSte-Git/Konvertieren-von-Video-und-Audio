@@ -7,6 +7,9 @@ const invoke =
 
 const inputPath = document.getElementById("inputPath");
 const outputPath = document.getElementById("outputPath");
+const audioOptionsSection = document.getElementById("audioOptionsSection");
+const audioAdjustment = document.getElementById("audioAdjustment");
+const audioAdjustmentHelp = document.getElementById("audioAdjustmentHelp");
 const clipSection = document.getElementById("clipSection");
 const clipStart = document.getElementById("clipStart");
 const clipEnd = document.getElementById("clipEnd");
@@ -27,6 +30,13 @@ let selectedInputs = [];
 let cancelRequested = false;
 let currentBatchIndex = 0;
 let currentBatchTotal = 0;
+const AUDIO_ADJUSTMENT_STORAGE_KEY = "konvertierung.audioAdjustment";
+const AUDIO_ADJUSTMENT_HELP = {
+  none: "Die Lautstärke wird nicht verändert.",
+  normalize: "Passt die Gesamtlautheit der Datei an.",
+  speech: "Gleicht unterschiedliche Sprecherlautstärken aus und begrenzt Lautstärkespitzen.",
+  strong: "Für Aufnahmen mit sehr leisen Stimmen und plötzlich sehr lauten Passagen.",
+};
 
 function formatHms(totalSeconds) {
   if (!Number.isFinite(totalSeconds)) return "";
@@ -63,8 +73,16 @@ function getClipMode() {
   return checked ? checked.value : "only";
 }
 
+function getAudioAdjustment() {
+  return audioAdjustment?.value || "none";
+}
+
 function supportsBatchMode(mode = getMode()) {
   return mode === "v2mp3" || mode === "a2mp3" || mode === "divx";
+}
+
+function supportsAudioAdjustment(mode = getMode()) {
+  return mode === "v2mp3" || mode === "a2mp3";
 }
 
 function isBatchModeActive() {
@@ -167,6 +185,28 @@ function isTime(value) {
 function updateClipVisibility() {
   const isClip = getMode() === "clip";
   clipSection.classList.toggle("hidden", !isClip);
+}
+
+function updateAudioOptionsVisibility() {
+  if (!audioOptionsSection) return;
+  audioOptionsSection.classList.toggle("hidden", !supportsAudioAdjustment());
+}
+
+function updateAudioAdjustmentHelp() {
+  if (!audioAdjustmentHelp) return;
+  audioAdjustmentHelp.textContent = AUDIO_ADJUSTMENT_HELP[getAudioAdjustment()] || AUDIO_ADJUSTMENT_HELP.none;
+}
+
+function loadAudioAdjustment() {
+  if (!audioAdjustment) return;
+  const saved = localStorage.getItem(AUDIO_ADJUSTMENT_STORAGE_KEY) || "none";
+  const hasOption = Array.from(audioAdjustment.options).some((option) => option.value === saved);
+  audioAdjustment.value = hasOption ? saved : "none";
+  updateAudioAdjustmentHelp();
+}
+
+function saveAudioAdjustment() {
+  localStorage.setItem(AUDIO_ADJUSTMENT_STORAGE_KEY, getAudioAdjustment());
 }
 
 function formatBytes(value) {
@@ -367,6 +407,7 @@ async function start() {
           mode,
           input: currentInput,
           output: currentOutput,
+          audioAdjustment: getAudioAdjustment(),
         });
       }
 
@@ -394,7 +435,7 @@ async function start() {
     setStatus("Konvertierung läuft ...");
     startProgressPolling();
     const startedAt = Date.now();
-    await invoke("convert_media", { mode, input, output });
+    await invoke("convert_media", { mode, input, output, audioAdjustment: getAudioAdjustment() });
     const elapsed = formatElapsedMs(Date.now() - startedAt);
     setStatus(`Fertig in ${elapsed}.`);
   } catch (err) {
@@ -415,6 +456,7 @@ for (const radio of document.querySelectorAll('input[name="mode"]')) {
       setInputSelection(selectedInputs.slice(0, 1));
     }
     updateClipVisibility();
+    updateAudioOptionsVisibility();
     updateOutputControls();
     const inputs = getInputList();
     if (inputs.length && !isBatchModeActive()) {
@@ -441,6 +483,8 @@ for (const radio of document.querySelectorAll('input[name="clipMode"]')) {
 }
 
 updateClipVisibility();
+loadAudioAdjustment();
+updateAudioOptionsVisibility();
 updateOutputControls();
 
 document.getElementById("browseInput").addEventListener("click", pickInput);
@@ -452,6 +496,10 @@ inputPath.addEventListener("input", () => {
 });
 outputPath.addEventListener("input", () => {
   lastAutoOutput = "";
+});
+audioAdjustment?.addEventListener("change", () => {
+  updateAudioAdjustmentHelp();
+  saveAudioAdjustment();
 });
 
 async function listenEvent(name, handler) {
