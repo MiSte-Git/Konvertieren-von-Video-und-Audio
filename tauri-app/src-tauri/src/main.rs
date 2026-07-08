@@ -2,16 +2,16 @@
 
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
-use std::sync::{Arc, Mutex};
 use serde::Serialize;
-use tauri::{AppHandle, Emitter, Manager, State};
+use std::sync::{Arc, Mutex};
 use tauri::image::Image;
+use tauri::{AppHandle, Emitter, Manager, State};
 
 struct AppState {
     current_pid: Arc<Mutex<Option<u32>>>,
@@ -44,7 +44,11 @@ fn log_line(app: &AppHandle, message: &str) {
         .map(|d| d.as_secs())
         .unwrap_or(0);
     let line = format!("[{}] {}\n", now, message);
-    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(log_path) {
+    if let Ok(mut file) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(log_path)
+    {
         let _ = file.write_all(line.as_bytes());
     }
 }
@@ -102,7 +106,8 @@ fn add_local_bin_to_path(app: &AppHandle) {
 fn ensure_output_dir(output_path: &str) -> Result<(), String> {
     if let Some(dir) = Path::new(output_path).parent() {
         if !dir.as_os_str().is_empty() {
-            std::fs::create_dir_all(dir).map_err(|e| format!("Ausgabeordner kann nicht erstellt werden: {e}"))?;
+            std::fs::create_dir_all(dir)
+                .map_err(|e| format!("Ausgabeordner kann nicht erstellt werden: {e}"))?;
         }
     }
     Ok(())
@@ -209,8 +214,12 @@ fn run_ffmpeg(
     }
     let mut cmd = Command::new(&args[0]);
     apply_no_window(&mut cmd);
-    cmd.args(&args[1..]).stdout(Stdio::piped()).stderr(Stdio::inherit());
-    let mut child = cmd.spawn().map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
+    cmd.args(&args[1..])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit());
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
     {
         let mut guard = current_pid.lock().map_err(|_| "Lock-Fehler".to_string())?;
         *guard = Some(child.id());
@@ -219,7 +228,8 @@ fn run_ffmpeg(
         let reader = BufReader::new(stdout);
         let mut values: HashMap<String, String> = HashMap::new();
         for line in reader.lines() {
-            let line = line.map_err(|e| format!("ffmpeg-Ausgabe konnte nicht gelesen werden: {e}"))?;
+            let line =
+                line.map_err(|e| format!("ffmpeg-Ausgabe konnte nicht gelesen werden: {e}"))?;
             if let Some((key, value)) = line.split_once('=') {
                 values.insert(key.to_string(), value.to_string());
                 if let Ok(mut guard) = progress_state.lock() {
@@ -234,7 +244,9 @@ fn run_ffmpeg(
             }
         }
     }
-    let status = child.wait().map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
+    let status = child
+        .wait()
+        .map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
     if let Ok(mut guard) = current_pid.lock() {
         *guard = None;
     }
@@ -242,7 +254,10 @@ fn run_ffmpeg(
         *guard = None;
     }
     if !status.success() {
-        return Err(format!("ffmpeg fehlgeschlagen (Exit-Code {:?})", status.code()));
+        return Err(format!(
+            "ffmpeg fehlgeschlagen (Exit-Code {:?})",
+            status.code()
+        ));
     }
     Ok(())
 }
@@ -373,7 +388,11 @@ fn extract_version_token(input: &str) -> Option<String> {
             }
         }
         if has_digit && has_dot {
-            return Some(token.trim_matches(|c: char| !c.is_ascii_digit() && c != '.').to_string());
+            return Some(
+                token
+                    .trim_matches(|c: char| !c.is_ascii_digit() && c != '.')
+                    .to_string(),
+            );
         }
     }
     None
@@ -392,9 +411,12 @@ fn verify_lame_output(path: &str) -> Result<(), String> {
     apply_no_window(&mut cmd);
     let output = cmd
         .args([
-            "-v", "error",
-            "-show_entries", "format_tags=encoder:stream_tags=encoder",
-            "-of", "default=noprint_wrappers=1:nokey=1",
+            "-v",
+            "error",
+            "-show_entries",
+            "format_tags=encoder:stream_tags=encoder",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
             path,
         ])
         .output()
@@ -494,9 +516,12 @@ fn get_media_duration(input: String) -> Result<f64, String> {
     apply_no_window(&mut cmd);
     let output = cmd
         .args([
-            "-v", "error",
-            "-show_entries", "format=duration",
-            "-of", "default=noprint_wrappers=1:nokey=1",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
             &input,
         ])
         .output()
@@ -538,7 +563,10 @@ fn kill_pid(pid: u32) -> Result<(), String> {
 
 #[tauri::command]
 fn cancel_current(state: State<AppState>) -> Result<(), String> {
-    let mut guard = state.current_pid.lock().map_err(|_| "Lock-Fehler".to_string())?;
+    let mut guard = state
+        .current_pid
+        .lock()
+        .map_err(|_| "Lock-Fehler".to_string())?;
     if let Some(pid) = *guard {
         kill_pid(pid)?;
         *guard = None;
@@ -585,14 +613,61 @@ async fn convert_media(
             build_audio_mp3_ffmpeg_args(mode.as_str(), &input, audio_adjustment.as_deref())?
         }
         "divx" => vec![
-            "ffmpeg", "-y", "-hwaccel", "auto", "-fflags", "+genpts", "-i", &input,
-            "-map", "0:v:0", "-map", "0:a:0", "-sn", "-dn",
-            "-c:v", "mpeg4", "-vtag", "XVID", "-qscale:v", "7", "-bf", "0", "-mbd", "0", "-g", "250",
-            "-me_method", "epzs", "-pix_fmt", "yuv420p", "-threads", "0", "-vsync", "1",
-            "-c:a", "libmp3lame", "-b:a", "128k", "-ac", "2", "-ar", "44100",
-            "-f", "avi", "-use_odml", "1", "-max_interleave_delta", "0", "-metadata", "title=film",
+            "ffmpeg",
+            "-y",
+            "-hwaccel",
+            "auto",
+            "-fflags",
+            "+genpts",
+            "-i",
+            &input,
+            "-map",
+            "0:v:0",
+            "-map",
+            "0:a:0",
+            "-sn",
+            "-dn",
+            "-c:v",
+            "mpeg4",
+            "-vtag",
+            "XVID",
+            "-qscale:v",
+            "7",
+            "-bf",
+            "0",
+            "-mbd",
+            "0",
+            "-g",
+            "250",
+            "-me_method",
+            "epzs",
+            "-pix_fmt",
+            "yuv420p",
+            "-threads",
+            "0",
+            "-vsync",
+            "1",
+            "-c:a",
+            "libmp3lame",
+            "-b:a",
+            "128k",
+            "-ac",
+            "2",
+            "-ar",
+            "44100",
+            "-f",
+            "avi",
+            "-use_odml",
+            "1",
+            "-max_interleave_delta",
+            "0",
+            "-metadata",
+            "title=film",
             &output,
-        ].into_iter().map(String::from).collect(),
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect(),
         _ => return Err("Unbekannter Modus".into()),
     };
 
@@ -649,7 +724,13 @@ async fn clip_media(
     app: AppHandle,
 ) -> Result<(), String> {
     let started_at = Instant::now();
-    log_line(&app, &format!("clip start input={} output={} start={} end={}", input, output, start, end));
+    log_line(
+        &app,
+        &format!(
+            "clip start input={} output={} start={} end={}",
+            input, output, start, end
+        ),
+    );
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
@@ -659,10 +740,9 @@ async fn clip_media(
     ensure_output_dir(&output)?;
 
     let args = vec![
-        "ffmpeg", "-i", &input, "-ss", &start, "-to", &end,
-        "-c:v", "libx264", "-b:v", "450k", "-maxrate", "450k", "-bufsize", "900k", "-preset", "slow",
-        "-c:a", "copy", "-map", "0:v:0", "-map", "0:a:0", "-map", "-0:d",
-        &output,
+        "ffmpeg", "-i", &input, "-ss", &start, "-to", &end, "-c:v", "libx264", "-b:v", "450k",
+        "-maxrate", "450k", "-bufsize", "900k", "-preset", "slow", "-c:a", "copy", "-map", "0:v:0",
+        "-map", "0:a:0", "-map", "-0:d", &output,
     ];
     let args_owned = args.into_iter().map(|s| s.to_string()).collect();
     let current_pid = state.current_pid.clone();
@@ -697,7 +777,13 @@ async fn remove_clip(
     app: AppHandle,
 ) -> Result<(), String> {
     let started_at = Instant::now();
-    log_line(&app, &format!("remove start input={} output={} start={} end={}", input, output, start, end));
+    log_line(
+        &app,
+        &format!(
+            "remove start input={} output={} start={} end={}",
+            input, output, start, end
+        ),
+    );
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
@@ -717,32 +803,26 @@ async fn remove_clip(
     let part2 = out_dir.join(format!("part2_{end_tag}__end.mp4"));
     let list_path = out_dir.join("list.txt");
 
-    let list_content = format!(
-        "file '{}'\nfile '{}'\n",
-        part1.display(),
-        part2.display()
-    );
-    std::fs::write(&list_path, list_content).map_err(|e| format!("list.txt konnte nicht erstellt werden: {e}"))?;
+    let list_content = format!("file '{}'\nfile '{}'\n", part1.display(), part2.display());
+    std::fs::write(&list_path, list_content)
+        .map_err(|e| format!("list.txt konnte nicht erstellt werden: {e}"))?;
 
     let part1_str = part1.to_string_lossy().to_string();
     let part2_str = part2.to_string_lossy().to_string();
     let list_str = list_path.to_string_lossy().to_string();
 
     let cmd1 = vec![
-        "ffmpeg", "-i", &input, "-to", &start,
-        "-c:v", "libx264", "-b:v", "450k", "-maxrate", "450k", "-bufsize", "900k", "-preset", "slow",
-        "-c:a", "copy", "-map", "0:v:0", "-map", "0:a:0", "-map", "-0:d",
-        &part1_str,
+        "ffmpeg", "-i", &input, "-to", &start, "-c:v", "libx264", "-b:v", "450k", "-maxrate",
+        "450k", "-bufsize", "900k", "-preset", "slow", "-c:a", "copy", "-map", "0:v:0", "-map",
+        "0:a:0", "-map", "-0:d", &part1_str,
     ];
     let cmd2 = vec![
-        "ffmpeg", "-i", &input, "-ss", &end,
-        "-c:v", "libx264", "-b:v", "450k", "-maxrate", "450k", "-bufsize", "900k", "-preset", "slow",
-        "-c:a", "copy", "-map", "0:v:0", "-map", "0:a:0", "-map", "-0:d",
-        &part2_str,
+        "ffmpeg", "-i", &input, "-ss", &end, "-c:v", "libx264", "-b:v", "450k", "-maxrate", "450k",
+        "-bufsize", "900k", "-preset", "slow", "-c:a", "copy", "-map", "0:v:0", "-map", "0:a:0",
+        "-map", "-0:d", &part2_str,
     ];
     let cmd3 = vec![
-        "ffmpeg", "-f", "concat", "-safe", "0", "-i", &list_str,
-        "-c", "copy", &output,
+        "ffmpeg", "-f", "concat", "-safe", "0", "-i", &list_str, "-c", "copy", &output,
     ];
 
     let cmds: Vec<Vec<String>> = vec![cmd1, cmd2, cmd3]
@@ -755,7 +835,12 @@ async fn remove_clip(
     let app_handle = app.clone();
     let result = tauri::async_runtime::spawn_blocking(move || {
         for cmd in cmds {
-            run_ffmpeg(cmd, current_pid.clone(), progress_state.clone(), app_handle.clone())?;
+            run_ffmpeg(
+                cmd,
+                current_pid.clone(),
+                progress_state.clone(),
+                app_handle.clone(),
+            )?;
         }
         Ok(())
     })
