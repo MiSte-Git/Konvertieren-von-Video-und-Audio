@@ -22,8 +22,8 @@ Windows (PowerShell, als Administrator):
 # Rust
 winget install --id Rustlang.Rustup -e
 
-# Visual Studio Build Tools
-winget install --id Microsoft.VisualStudio.2022.BuildTools -e
+# Visual Studio Build Tools (nur C++ Compiler/Linker + Windows SDK, ohne Recommended-Extras -> ca. 6 GB statt 8+ GB)
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows11SDK.22621"
 
 # WebView2 Runtime
 winget install --id Microsoft.EdgeWebView2Runtime -e
@@ -43,9 +43,9 @@ powershell .\install-windows.ps1
 ```
 
 Hinweise (Windows):
-- Das Build-Skript installiert Rust (cargo) auf Wunsch via winget.
+- Das Build-Skript installiert Visual Studio Build Tools (C++ Workload) und Rust (cargo) auf Wunsch via winget.
 - tauri-cli wird bei Bedarf via cargo installiert.
-- Visual Studio Build Tools und WebView2 Runtime muessen vorher vorhanden sein.
+- WebView2 Runtime muss vorher vorhanden sein.
 
 macOS:
 ```bash

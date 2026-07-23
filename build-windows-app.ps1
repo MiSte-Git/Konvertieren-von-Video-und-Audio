@@ -12,16 +12,23 @@ function Command-Exists($name) {
   return $null -ne (Get-Command $name -ErrorAction SilentlyContinue)
 }
 
-function Prompt-Install($name, $wingetId) {
+function Prompt-Install($name, $wingetId, $extraArgs = @()) {
   $answer = Read-Host "$name fehlt. Soll es per winget installiert werden? (j/N)"
   if ($answer -match '^(j|ja|y|yes)$') {
     if (-not (Command-Exists "winget")) {
       throw "winget nicht gefunden. Bitte $name manuell installieren."
     }
-    winget install --id $wingetId -e
+    winget install --id $wingetId -e --accept-package-agreements --accept-source-agreements --force @extraArgs
   } else {
     throw "$name fehlt. Bitte installieren und erneut ausfuehren."
   }
+}
+
+function Test-VCBuildTools {
+  $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+  if (-not (Test-Path $vswhere)) { return $false }
+  $result = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
+  return -not [string]::IsNullOrWhiteSpace($result)
 }
 
 function Ensure-IconIco($pngPath, $icoPath) {
@@ -64,6 +71,14 @@ function Ensure-IconIco($pngPath, $icoPath) {
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $TauriDir = Join-Path $ScriptDir "tauri-app"
 Assert-Dir $TauriDir "tauri-app Ordner nicht gefunden: $TauriDir"
+
+if (-not (Test-VCBuildTools)) {
+  Prompt-Install "Visual Studio Build Tools (C++ Workload, minimal)" "Microsoft.VisualStudio.2022.BuildTools" `
+    @("--override", "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows11SDK.22621")
+  if (-not (Test-VCBuildTools)) {
+    throw "Visual Studio Build Tools (C++ Workload) fehlen weiterhin. Bitte manuell installieren und erneut ausfuehren."
+  }
+}
 
 if (-not (Command-Exists "cargo")) {
   Prompt-Install "Rust (cargo)" "Rustlang.Rustup"
