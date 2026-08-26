@@ -74,6 +74,7 @@ header p {
 }
 
 input[type="text"],
+input[type="number"],
 select {
   width: 100%;
   padding: 10px 12px;
@@ -81,6 +82,37 @@ select {
   border: 1px solid var(--line);
   font-size: 14px;
   background: #fcfbf8;
+}
+
+.file-order {
+  margin: 8px 0 0;
+  padding-left: 34px;
+}
+
+.file-order li {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fcfbf8;
+}
+
+.file-order-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-order-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-order button {
+  padding: 5px 9px;
 }
 
 .field-help {

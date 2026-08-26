@@ -113,6 +113,34 @@ fn ensure_output_dir(output_path: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn probe_duration(input: &str) -> Result<f64, String> {
+    let mut cmd = Command::new("ffprobe");
+    apply_no_window(&mut cmd);
+    let output = cmd
+        .args([
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            &input,
+        ])
+        .output()
+        .map_err(|e| format!("ffprobe konnte nicht gestartet werden: {e}"))?;
+    if !output.status.success() {
+        return Err("ffprobe fehlgeschlagen beim Ermitteln der Dauer.".into());
+    }
+    let raw = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let duration = raw
+        .parse::<f64>()
+        .map_err(|_| "Dauer konnte nicht gelesen werden.".to_string())?;
+    if !duration.is_finite() || duration <= 0.0 {
+        return Err("Die Videodauer ist ungültig.".into());
+    }
+    Ok(duration)
+}
+
 fn is_hh_mm_ss(value: &str) -> bool {
     let parts: Vec<&str> = value.split(':').collect();
     if parts.len() != 3 {
@@ -151,7 +179,7 @@ fn build_audio_mp3_ffmpeg_args(
             "ffmpeg",
             "-y",
             "-i",
-            input,
+            &input,
             "-vn",
             "-ar",
             "44100",
@@ -505,33 +533,36 @@ mod tests {
             get_audio_filter(Some("strong")).unwrap()
         );
     }
+
+    #[test]
+    fn target_size_uses_five_percent_container_reserve() {
+        assert_eq!(target_video_bitrate_kbit(100.0, 100.0).unwrap(), 7654);
+    }
+
+    #[test]
+    fn target_size_rejects_impossibly_small_bitrate() {
+        assert!(target_video_bitrate_kbit(1.0, 3600.0).is_err());
+    }
+
+    #[test]
+    fn concat_file_line_escapes_quotes_and_windows_separators() {
+        assert_eq!(
+            concat_file_line("C:\\Videos\\Max's Clip.mp4"),
+            "file 'C:/Videos/Max'\\''s Clip.mp4'\n"
+        );
+    }
 }
 
 #[tauri::command]
 fn get_media_duration(input: String) -> Result<f64, String> {
+    probe_media_duration(&input)
+}
+
+fn probe_media_duration(input: &str) -> Result<f64, String> {
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
-    let mut cmd = Command::new("ffprobe");
-    apply_no_window(&mut cmd);
-    let output = cmd
-        .args([
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            &input,
-        ])
-        .output()
-        .map_err(|e| format!("ffprobe konnte nicht gestartet werden: {e}"))?;
-    if !output.status.success() {
-        return Err("ffprobe fehlgeschlagen beim Ermitteln der Dauer.".into());
-    }
-    let raw = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    raw.parse::<f64>()
-        .map_err(|_| "Dauer konnte nicht gelesen werden.".into())
+    probe_duration(&input)
 }
 
 #[cfg(target_family = "unix")]
@@ -714,6 +745,277 @@ async fn convert_media(
     }
 }
 
+fn target_video_bitrate_kbit(target_size_mb: f64, duration_sec: f64) -> Result<u64, String> {
+    if !target_size_mb.is_finite() || target_size_mb < 1.0 {
+        return Err("Die Zielgröße muss mindestens 1 MB betragen.".into());
+    }
+    if !duration_sec.is_finite() || duration_sec <= 0.0 {
+        return Err("Die Videodauer konnte nicht ermittelt werden.".into());
+    }
+    const AUDIO_KBIT: f64 = 128.0;
+    // Fünf Prozent Reserve für MP4-Container und Schwankungen der Zweipass-Kodierung.
+    let total_kbit = target_size_mb * 0.95 * 8192.0 / duration_sec;
+    let video_kbit = total_kbit - AUDIO_KBIT;
+    if video_kbit < 50.0 {
+        return Err("Die gewählte Zielgröße ist für die Dauer des Videos zu klein.".into());
+    }
+    Ok(video_kbit.floor() as u64)
+}
+
+fn concat_file_line(path: &str) -> String {
+    let escaped = path.replace('\\', "/").replace('\'', "'\\''");
+    format!("file '{escaped}'\n")
+}
+
+fn unique_temp_prefix(label: &str) -> PathBuf {
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    std::env::temp_dir().join(format!(
+        "konvertierung_{label}_{}_{}",
+        std::process::id(),
+        stamp
+    ))
+}
+
+fn remove_pass_files(prefix: &Path) {
+    for suffix in ["-0.log", "-0.log.mbtree", ".log", ".log.mbtree"] {
+        let _ = std::fs::remove_file(format!("{}{suffix}", prefix.to_string_lossy()));
+    }
+}
+
+fn two_pass_h264_args(
+    input_args: &[String],
+    output: &str,
+    video_kbit: u64,
+    passlog: &Path,
+) -> (Vec<String>, Vec<String>) {
+    let bitrate = format!("{video_kbit}k");
+    let passlog = passlog.to_string_lossy().to_string();
+    let null_output = if cfg!(target_os = "windows") {
+        "NUL"
+    } else {
+        "/dev/null"
+    };
+
+    let mut pass1 = vec!["ffmpeg".to_string(), "-y".to_string()];
+    pass1.extend_from_slice(input_args);
+    pass1.extend(
+        [
+            "-map",
+            "0:v:0",
+            "-c:v",
+            "libx264",
+            "-b:v",
+            &bitrate,
+            "-pass",
+            "1",
+            "-passlogfile",
+            &passlog,
+            "-an",
+            "-f",
+            "null",
+            "-progress",
+            "pipe:1",
+            null_output,
+        ]
+        .into_iter()
+        .map(String::from),
+    );
+
+    let mut pass2 = vec!["ffmpeg".to_string(), "-y".to_string()];
+    pass2.extend_from_slice(input_args);
+    pass2.extend(
+        [
+            "-map",
+            "0:v:0",
+            "-map",
+            "0:a:0?",
+            "-c:v",
+            "libx264",
+            "-b:v",
+            &bitrate,
+            "-pass",
+            "2",
+            "-passlogfile",
+            &passlog,
+            "-c:a",
+            "aac",
+            "-b:a",
+            "128k",
+            "-movflags",
+            "+faststart",
+            output,
+        ]
+        .into_iter()
+        .map(String::from),
+    );
+    (pass1, pass2)
+}
+
+#[tauri::command]
+async fn compress_to_size(
+    input: String,
+    output: String,
+    target_size_mb: f64,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
+    if !Path::new(&input).is_file() {
+        return Err("Bitte eine gültige Eingabedatei wählen.".into());
+    }
+    if Path::new(&input) == Path::new(&output) {
+        return Err("Quelle und Ziel dürfen nicht identisch sein.".into());
+    }
+    ensure_output_dir(&output)?;
+    let duration = probe_media_duration(&input)?;
+    let video_kbit = target_video_bitrate_kbit(target_size_mb, duration)?;
+    let passlog = unique_temp_prefix("pass");
+    let input_args = vec!["-i".to_string(), input.clone()];
+    let (pass1, pass2) = two_pass_h264_args(&input_args, &output, video_kbit, &passlog);
+    log_line(
+        &app,
+        &format!(
+            "compress start input={} output={} target_mb={} video_kbit={}",
+            input, output, target_size_mb, video_kbit
+        ),
+    );
+
+    let current_pid = state.current_pid.clone();
+    let progress_state = state.progress.clone();
+    let app_handle = app.clone();
+    let passlog_for_cleanup = passlog.clone();
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        let result = run_ffmpeg(
+            pass1,
+            current_pid.clone(),
+            progress_state.clone(),
+            app_handle.clone(),
+        )
+        .and_then(|_| run_ffmpeg(pass2, current_pid, progress_state, app_handle));
+        remove_pass_files(&passlog_for_cleanup);
+        result
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+    if let Err(ref err) = result {
+        log_line(&app, &format!("compress error={err}"));
+    } else {
+        log_line(&app, "compress done");
+    }
+    result
+}
+
+#[tauri::command]
+async fn join_videos(
+    inputs: Vec<String>,
+    output: String,
+    compress: bool,
+    target_size_mb: f64,
+    state: State<'_, AppState>,
+    app: AppHandle,
+) -> Result<(), String> {
+    if inputs.len() < 2 {
+        return Err("Bitte mindestens zwei Videos auswählen.".into());
+    }
+    for input in &inputs {
+        if !Path::new(input).is_file() {
+            return Err(format!("Eingabedatei nicht gefunden: {input}"));
+        }
+        if Path::new(input) == Path::new(&output) {
+            return Err("Das Ziel darf keine der Quelldateien überschreiben.".into());
+        }
+    }
+    ensure_output_dir(&output)?;
+    let video_kbit = if compress {
+        let duration: f64 = inputs
+            .iter()
+            .map(|p| probe_media_duration(p))
+            .collect::<Result<Vec<_>, _>>()?
+            .iter()
+            .sum();
+        Some(target_video_bitrate_kbit(target_size_mb, duration)?)
+    } else {
+        None
+    };
+    let list_path = unique_temp_prefix("concat").with_extension("txt");
+    let list_content = inputs
+        .iter()
+        .map(|path| {
+            std::fs::canonicalize(path)
+                .map(|absolute| concat_file_line(&absolute.to_string_lossy()))
+                .map_err(|e| format!("Pfad konnte nicht gelesen werden ({path}): {e}"))
+        })
+        .collect::<Result<Vec<_>, _>>()?
+        .concat();
+    std::fs::write(&list_path, list_content)
+        .map_err(|e| format!("Temporäre Dateiliste konnte nicht erstellt werden: {e}"))?;
+    let list_string = list_path.to_string_lossy().to_string();
+    let concat_input = vec![
+        "-f".to_string(),
+        "concat".to_string(),
+        "-safe".to_string(),
+        "0".to_string(),
+        "-i".to_string(),
+        list_string,
+    ];
+    let current_pid = state.current_pid.clone();
+    let progress_state = state.progress.clone();
+    let app_handle = app.clone();
+    let passlog = unique_temp_prefix("join_pass");
+
+    let commands = if let Some(video_kbit) = video_kbit {
+        let (pass1, pass2) = two_pass_h264_args(&concat_input, &output, video_kbit, &passlog);
+        vec![pass1, pass2]
+    } else {
+        let mut args = vec!["ffmpeg".to_string(), "-y".to_string()];
+        args.extend(concat_input);
+        args.extend(
+            ["-c", "copy", "-movflags", "+faststart", &output]
+                .into_iter()
+                .map(String::from),
+        );
+        vec![args]
+    };
+    log_line(
+        &app,
+        &format!(
+            "join start files={} compress={} output={}",
+            inputs.len(),
+            compress,
+            output
+        ),
+    );
+    let list_for_cleanup = list_path.clone();
+    let passlog_for_cleanup = passlog.clone();
+    let result = tauri::async_runtime::spawn_blocking(move || {
+        let mut result = Ok(());
+        for command in commands {
+            if let Err(err) = run_ffmpeg(
+                command,
+                current_pid.clone(),
+                progress_state.clone(),
+                app_handle.clone(),
+            ) {
+                result = Err(err);
+                break;
+            }
+        }
+        let _ = std::fs::remove_file(list_for_cleanup);
+        remove_pass_files(&passlog_for_cleanup);
+        result
+    })
+    .await
+    .map_err(|e| e.to_string())?;
+    if let Err(ref err) = result {
+        log_line(&app, &format!("join error={err}"));
+    } else {
+        log_line(&app, "join done");
+    }
+    result
+}
+
 #[tauri::command]
 async fn clip_media(
     input: String,
@@ -879,6 +1181,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             convert_media,
+            compress_to_size,
+            join_videos,
             clip_media,
             remove_clip,
             cancel_current,

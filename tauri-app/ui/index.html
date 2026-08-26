@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>Konvertierung Audio-Video</title>
-    <link rel="stylesheet" href="style.css?v=5" />
+    <link rel="stylesheet" href="style.css?v=6" />
   </head>
   <body>
     <div class="app">
@@ -23,6 +23,8 @@
           <label><input type="radio" name="mode" value="a2mp3" /> Audio zu MP3</label>
           <label><input type="radio" name="mode" value="divx" /> Video zu AVI (DivX)</label>
           <label><input type="radio" name="mode" value="clip" /> Video-Ausschnitt</label>
+          <label><input type="radio" name="mode" value="targetsize" /> Video auf Zielgröße komprimieren</label>
+          <label><input type="radio" name="mode" value="join" /> Videos zusammenfügen</label>
         </div>
       </section>
 
@@ -38,6 +40,26 @@
           </select>
           <span id="audioAdjustmentHelp" class="field-help">Die Lautstärke wird nicht verändert.</span>
         </div>
+      </section>
+
+      <section id="joinOrderSection" class="card hidden">
+        <h2>Reihenfolge</h2>
+        <p class="field-help">Die Videos werden von oben nach unten zusammengefügt. Mit den Pfeilen lässt sich die Reihenfolge ändern.</p>
+        <ol id="joinOrderList" class="file-order"></ol>
+      </section>
+
+      <section id="targetSizeSection" class="card hidden">
+        <h2>Zielgröße</h2>
+        <div class="row">
+          <label for="targetSizeMb">Maximale Größe</label>
+          <input id="targetSizeMb" type="number" min="1" step="1" value="100" />
+          <span>MB</span>
+        </div>
+        <label id="joinCompressOption" class="hidden">
+          <input id="compressAfterJoin" type="checkbox" />
+          Nach dem Zusammenfügen auf diese Zielgröße komprimieren
+        </label>
+        <p id="joinCopyHint" class="field-help hidden">Ohne Komprimierung werden die Streams unverändert kopiert. Die Videos müssen dafür kompatible Bild-, Ton- und Formateinstellungen haben.</p>
       </section>
 
       <section class="card">
@@ -96,6 +118,6 @@
       </section>
     </div>
 
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
   </body>
 </html>

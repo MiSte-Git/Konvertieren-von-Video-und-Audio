@@ -73,6 +73,13 @@ ffmpeg bereitstellen:
 - Systemweit installieren oder
 - im App-Ordner beilegen (z.B. `tauri-app/bin/` oder `tauri-app/bin/<os>`)
 
+Die GUI unterstützt außerdem:
+- Videos per Zweipass-H.264-Kodierung auf eine frei wählbare Maximalgröße zu komprimieren (Standard: 100 MB).
+- Mehrere Videos in einer änderbaren Reihenfolge ohne Neukodierung zusammenzufügen.
+- Das zusammengefügte Video optional anschließend auf die gewählte Maximalgröße zu komprimieren.
+
+Beim Zusammenfügen ohne Komprimierung müssen die Video- und Audiostreams der Quelldateien kompatibel sein.
+
 Preflight-Check (optional):
 ```bash
 tauri-app/scripts/check_deps.sh

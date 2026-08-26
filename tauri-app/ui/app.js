@@ -13,6 +13,13 @@ const audioAdjustmentHelp = document.getElementById("audioAdjustmentHelp");
 const clipSection = document.getElementById("clipSection");
 const clipStart = document.getElementById("clipStart");
 const clipEnd = document.getElementById("clipEnd");
+const targetSizeSection = document.getElementById("targetSizeSection");
+const targetSizeMb = document.getElementById("targetSizeMb");
+const joinCompressOption = document.getElementById("joinCompressOption");
+const compressAfterJoin = document.getElementById("compressAfterJoin");
+const joinCopyHint = document.getElementById("joinCopyHint");
+const joinOrderSection = document.getElementById("joinOrderSection");
+const joinOrderList = document.getElementById("joinOrderList");
 const statusEl = document.getElementById("status");
 const startBtn = document.getElementById("startBtn");
 const cancelBtn = document.getElementById("cancelBtn");
@@ -78,7 +85,7 @@ function getAudioAdjustment() {
 }
 
 function supportsBatchMode(mode = getMode()) {
-  return mode === "v2mp3" || mode === "a2mp3" || mode === "divx";
+  return mode === "v2mp3" || mode === "a2mp3" || mode === "divx" || mode === "join";
 }
 
 function supportsAudioAdjustment(mode = getMode()) {
@@ -86,7 +93,7 @@ function supportsAudioAdjustment(mode = getMode()) {
 }
 
 function isBatchModeActive() {
-  return supportsBatchMode() && selectedInputs.length > 1;
+  return supportsBatchMode() && getMode() !== "join" && selectedInputs.length > 1;
 }
 
 function setStatus(text) {
@@ -139,6 +146,14 @@ function defaultOutput(input, mode, clipMode) {
     const name = `${stem}_${suffix}_${tsSuffix()}.mp4`;
     return dir ? `${dir}${sep}${name}` : name;
   }
+  if (mode === "targetsize") {
+    const name = `${stem}_komprimiert.mp4`;
+    return dir ? `${dir}${sep}${name}` : name;
+  }
+  if (mode === "join") {
+    const name = `${stem}_zusammengefuegt.mp4`;
+    return dir ? `${dir}${sep}${name}` : name;
+  }
   const ext = mode === "divx" ? "_DivX.avi" : "_LAME.mp3";
   const name = `${stem}${ext}`;
   return dir ? `${dir}${sep}${name}` : name;
@@ -149,12 +164,51 @@ function setInputSelection(paths) {
   if (selectedInputs.length > 1) {
     inputPath.value = `${selectedInputs.length} Dateien ausgewählt`;
     inputPath.title = selectedInputs.join("\n");
+    renderJoinOrder();
     return;
   }
 
   const single = selectedInputs[0] || "";
   inputPath.value = single;
   inputPath.title = single;
+  renderJoinOrder();
+}
+
+function renderJoinOrder() {
+  if (!joinOrderList) return;
+  joinOrderList.replaceChildren();
+  selectedInputs.forEach((path, index) => {
+    const item = document.createElement("li");
+    const row = document.createElement("div");
+    row.className = "file-order-row";
+    const name = document.createElement("span");
+    name.className = "file-order-name";
+    name.textContent = splitPath(path).base;
+    name.title = path;
+    const up = document.createElement("button");
+    up.type = "button";
+    up.textContent = "↑";
+    up.title = "Nach oben";
+    up.disabled = index === 0;
+    up.addEventListener("click", () => moveJoinInput(index, index - 1));
+    const down = document.createElement("button");
+    down.type = "button";
+    down.textContent = "↓";
+    down.title = "Nach unten";
+    down.disabled = index === selectedInputs.length - 1;
+    down.addEventListener("click", () => moveJoinInput(index, index + 1));
+    row.append(name, up, down);
+    item.append(row);
+    joinOrderList.append(item);
+  });
+}
+
+function moveJoinInput(from, to) {
+  if (to < 0 || to >= selectedInputs.length) return;
+  const [item] = selectedInputs.splice(from, 1);
+  selectedInputs.splice(to, 0, item);
+  inputPath.title = selectedInputs.join("\n");
+  renderJoinOrder();
 }
 
 function getInputList() {
@@ -190,6 +244,17 @@ function updateClipVisibility() {
 function updateAudioOptionsVisibility() {
   if (!audioOptionsSection) return;
   audioOptionsSection.classList.toggle("hidden", !supportsAudioAdjustment());
+}
+
+function updateVideoOptionsVisibility() {
+  const mode = getMode();
+  const isJoin = mode === "join";
+  const isTargetSize = mode === "targetsize";
+  targetSizeSection?.classList.toggle("hidden", !isJoin && !isTargetSize);
+  joinCompressOption?.classList.toggle("hidden", !isJoin);
+  joinCopyHint?.classList.toggle("hidden", !isJoin);
+  joinOrderSection?.classList.toggle("hidden", !isJoin);
+  if (targetSizeMb) targetSizeMb.disabled = isJoin && !compressAfterJoin?.checked;
 }
 
 function updateAudioAdjustmentHelp() {
@@ -301,7 +366,9 @@ async function pickInput() {
   updateOutputControls();
 
   if (paths.length > 1 && supportsBatchMode(mode)) {
-    setStatus(`${paths.length} Dateien ausgewählt. Ausgabe erfolgt je Datei neben der Quelle.`);
+    setStatus(mode === "join"
+      ? `${paths.length} Videos ausgewählt. Reihenfolge kann unten geändert werden.`
+      : `${paths.length} Dateien ausgewählt. Ausgabe erfolgt je Datei neben der Quelle.`);
     return;
   }
 
@@ -345,6 +412,72 @@ async function start() {
     if (!isBatchModeActive()) {
       outputPath.value = output;
     }
+  }
+
+  const requestedSizeMb = Number(targetSizeMb?.value || 100);
+  if ((mode === "targetsize" || (mode === "join" && compressAfterJoin?.checked)) &&
+      (!Number.isFinite(requestedSizeMb) || requestedSizeMb < 1)) {
+    setStatus("Bitte eine Zielgröße von mindestens 1 MB eingeben.");
+    return;
+  }
+
+  if (mode === "join") {
+    if (inputs.length < 2) {
+      setStatus("Bitte mindestens zwei Videos auswählen.");
+      return;
+    }
+    const startedAt = Date.now();
+    setRunning(true);
+    startBtn.disabled = true;
+    cancelBtn.disabled = false;
+    totalDurationSec = null;
+    try {
+      const durations = await Promise.all(inputs.map((path) => invoke("get_media_duration", { input: path })));
+      totalDurationSec = durations.reduce((sum, value) => sum + (Number(value) || 0), 0) || null;
+    } catch {
+      totalDurationSec = null;
+    }
+    setStatus(compressAfterJoin.checked ? "Videos zusammenfügen und komprimieren ..." : "Videos zusammenfügen ...");
+    startProgressPolling();
+    try {
+      await invoke("join_videos", {
+        inputs,
+        output,
+        compress: compressAfterJoin.checked,
+        targetSizeMb: requestedSizeMb,
+      });
+      setStatus(`Fertig in ${formatElapsedMs(Date.now() - startedAt)}.`);
+    } catch (err) {
+      setStatus(cancelRequested ? "Abgebrochen." : `Fehler: ${err}`);
+    } finally {
+      startBtn.disabled = false;
+      cancelBtn.disabled = true;
+      totalDurationSec = null;
+      setRunning(false);
+    }
+    return;
+  }
+
+  if (mode === "targetsize") {
+    const startedAt = Date.now();
+    setRunning(true);
+    startBtn.disabled = true;
+    cancelBtn.disabled = false;
+    try {
+      totalDurationSec = await invoke("get_media_duration", { input });
+      setStatus(`Video auf maximal ${requestedSizeMb} MB komprimieren ...`);
+      startProgressPolling();
+      await invoke("compress_to_size", { input, output, targetSizeMb: requestedSizeMb });
+      setStatus(`Fertig in ${formatElapsedMs(Date.now() - startedAt)}.`);
+    } catch (err) {
+      setStatus(cancelRequested ? "Abgebrochen." : `Fehler: ${err}`);
+    } finally {
+      startBtn.disabled = false;
+      cancelBtn.disabled = true;
+      totalDurationSec = null;
+      setRunning(false);
+    }
+    return;
   }
 
   if (mode === "clip") {
@@ -457,6 +590,7 @@ for (const radio of document.querySelectorAll('input[name="mode"]')) {
     }
     updateClipVisibility();
     updateAudioOptionsVisibility();
+    updateVideoOptionsVisibility();
     updateOutputControls();
     const inputs = getInputList();
     if (inputs.length && !isBatchModeActive()) {
@@ -485,6 +619,7 @@ for (const radio of document.querySelectorAll('input[name="clipMode"]')) {
 updateClipVisibility();
 loadAudioAdjustment();
 updateAudioOptionsVisibility();
+updateVideoOptionsVisibility();
 updateOutputControls();
 
 document.getElementById("browseInput").addEventListener("click", pickInput);
@@ -501,6 +636,7 @@ audioAdjustment?.addEventListener("change", () => {
   updateAudioAdjustmentHelp();
   saveAudioAdjustment();
 });
+compressAfterJoin?.addEventListener("change", updateVideoOptionsVisibility);
 
 async function listenEvent(name, handler) {
   if (listen) return listen(name, handler);
