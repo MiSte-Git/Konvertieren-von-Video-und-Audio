@@ -220,6 +220,36 @@ fn build_audio_mp3_ffmpeg_args(
     Ok(args)
 }
 
+fn build_adjust_video_audio_args(
+    input: &str,
+    output: &str,
+    audio_adjustment: Option<&str>,
+) -> Result<Vec<String>, String> {
+    let mut args = [
+        "ffmpeg", "-y", "-i", input, "-map", "0", "-c", "copy", "-c:a", "aac", "-b:a", "192k",
+    ]
+    .into_iter()
+    .map(String::from)
+    .collect::<Vec<_>>();
+    if let Some(filter) = get_audio_filter(audio_adjustment)? {
+        args.push("-filter:a".to_string());
+        args.push(filter.to_string());
+    }
+    args.extend(
+        [
+            "-nostats",
+            "-loglevel",
+            "error",
+            "-progress",
+            "pipe:1",
+            output,
+        ]
+        .into_iter()
+        .map(String::from),
+    );
+    Ok(args)
+}
+
 #[derive(Serialize, Clone)]
 struct FfmpegProgress {
     values: HashMap<String, String>,
@@ -535,6 +565,19 @@ mod tests {
     }
 
     #[test]
+    fn adjust_video_audio_copies_video_and_encodes_audio() {
+        let args =
+            build_adjust_video_audio_args("/tmp/input.mp4", "/tmp/output.mp4", Some("normalize"))
+                .unwrap();
+        assert!(args.windows(2).any(|pair| pair == ["-c", "copy"]));
+        assert!(args.windows(2).any(|pair| pair == ["-c:a", "aac"]));
+        assert!(args
+            .windows(2)
+            .any(|pair| pair == ["-filter:a", "loudnorm=I=-16:LRA=11:TP=-1.5"]));
+        assert!(!has_arg(&args, "-c:v"));
+    }
+
+    #[test]
     fn target_size_uses_five_percent_container_reserve() {
         assert_eq!(target_video_bitrate_kbit(100.0, 100.0).unwrap(), 7654);
     }
@@ -637,11 +680,17 @@ async fn convert_media(
     if !Path::new(&input).is_file() {
         return Err("Bitte eine gültige Eingabedatei wählen.".into());
     }
+    if mode == "adjustvideoaudio" && Path::new(&input) == Path::new(&output) {
+        return Err("Quelle und Ziel dürfen nicht identisch sein.".into());
+    }
     ensure_output_dir(&output)?;
 
     let args_owned = match mode.as_str() {
         "v2mp3" | "a2mp3" => {
             build_audio_mp3_ffmpeg_args(mode.as_str(), &input, audio_adjustment.as_deref())?
+        }
+        "adjustvideoaudio" => {
+            build_adjust_video_audio_args(&input, &output, audio_adjustment.as_deref())?
         }
         "divx" => vec![
             "ffmpeg",

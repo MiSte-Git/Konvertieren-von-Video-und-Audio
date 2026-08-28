@@ -74,6 +74,7 @@ ffmpeg bereitstellen:
 - im App-Ordner beilegen (z.B. `tauri-app/bin/` oder `tauri-app/bin/<os>`)
 
 Die GUI unterstützt außerdem:
+- Die Audiospur eines Videos mit den gewählten Lautstärkeoptionen anzupassen, ohne das Video neu zu kodieren.
 - Videos per Zweipass-H.264-Kodierung auf eine frei wählbare Maximalgröße zu komprimieren (Standard: 100 MB).
 - Mehrere Videos in einer änderbaren Reihenfolge ohne Neukodierung zusammenzufügen.
 - Das zusammengefügte Video optional anschließend auf die gewählte Maximalgröße zu komprimieren.

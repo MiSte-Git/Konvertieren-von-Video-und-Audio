@@ -85,11 +85,11 @@ function getAudioAdjustment() {
 }
 
 function supportsBatchMode(mode = getMode()) {
-  return mode === "v2mp3" || mode === "a2mp3" || mode === "divx" || mode === "join";
+  return mode === "v2mp3" || mode === "a2mp3" || mode === "adjustvideoaudio" || mode === "divx" || mode === "join";
 }
 
 function supportsAudioAdjustment(mode = getMode()) {
-  return mode === "v2mp3" || mode === "a2mp3";
+  return mode === "v2mp3" || mode === "a2mp3" || mode === "adjustvideoaudio";
 }
 
 function isBatchModeActive() {
@@ -152,6 +152,12 @@ function defaultOutput(input, mode, clipMode) {
   }
   if (mode === "join") {
     const name = `${stem}_zusammengefuegt.mp4`;
+    return dir ? `${dir}${sep}${name}` : name;
+  }
+  if (mode === "adjustvideoaudio") {
+    const extensionIndex = base.lastIndexOf(".");
+    const extension = extensionIndex > 0 ? base.slice(extensionIndex) : ".mp4";
+    const name = `${stem}_audio_angepasst${extension}`;
     return dir ? `${dir}${sep}${name}` : name;
   }
   const ext = mode === "divx" ? "_DivX.avi" : "_LAME.mp3";
