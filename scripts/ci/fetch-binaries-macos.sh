@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # CI (macOS): legt ffmpeg, ffprobe und lame nach bin/darwin/, damit sie in die App gebuendelt werden.
 # ffmpeg/ffprobe: statische Builds von ffmpeg.martin-riedl.de
-# lame: wird aus den Quellen statisch gebaut (keine Homebrew-Abhaengigkeiten)
+# lame: wird aus den Quellen statisch gebaut (keine Homebrew-Abhaengigkeiten).
+#       Bewusst 3.100: lame 4.x braucht libmpg123, 3.100 hat den Decoder eingebaut.
 set -euo pipefail
 
-LAME_VERSION="4.0"
-LAME_SHA256="3df5124d5ad3a98312ffd7ba6a9b36230e4f8a3e66d3ce0f425e336c32d216eb"
+LAME_VERSION="3.100"
+LAME_SHA256="ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e"
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DST="$REPO/bin/darwin"
@@ -32,10 +33,13 @@ echo "$LAME_SHA256  $TMP/lame.tar.gz" | shasum -a 256 -c -
 tar -xzf "$TMP/lame.tar.gz" -C "$TMP"
 (
   cd "$TMP/lame-$LAME_VERSION"
+  # Bekannter Fehler in 3.100 auf macOS (Symbol existiert nicht mehr)
+  sed -i '' '/lame_init_old/d' include/libmp3lame.sym
   export ac_cv_prog_cc_c23=no
   export CFLAGS="${CFLAGS:-} -O2 -Wno-implicit-function-declaration"
   ./configure --disable-dependency-tracking --disable-debug \
-    --disable-shared --enable-static --prefix="$TMP/inst"
+    --disable-shared --enable-static --disable-gtktest \
+    --prefix="$TMP/inst"
   make -j"$(sysctl -n hw.ncpu)"
   make install
 )
