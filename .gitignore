@@ -41,3 +41,7 @@ htmlcov/
 Thumbs.db
 *.swp
 *~
+
+# ffmpeg/lame fuer Installer (werden in der CI befuellt)
+bin/windows/
+bin/darwin/

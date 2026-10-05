@@ -1,12 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-schema/src/tauri.schema.json",
   "productName": "Konvertierung Audio-Video",
-  "version": "0.1.0",
   "identifier": "de.michael.konvertierung",
   "build": {
-    "beforeDevCommand": "python3 -m http.server 1420 --directory ./ui",
-    "beforeBuildCommand": "",
-    "devUrl": "http://localhost:1420/index.html?dev=2",
     "frontendDist": "../ui"
   },
   "app": {
@@ -23,18 +19,37 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "rpm"],
+    "targets": "all",
+    "category": "Video",
+    "shortDescription": "Video zu Audio konvertieren (ffmpeg/LAME)",
+    "license": "GPL-3.0-only",
     "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
       "icons/icon.png",
+      "icons/icon.icns",
       "icons/icon.ico"
     ],
     "linux": {
       "deb": {
-        "desktopTemplate": "desktop/main.desktop"
+        "desktopTemplate": "desktop/main.desktop",
+        "depends": [
+          "ffmpeg",
+          "lame"
+        ]
       },
       "rpm": {
-        "desktopTemplate": "desktop/main.desktop"
+        "desktopTemplate": "desktop/main.desktop",
+        "depends": [
+          "/usr/bin/ffmpeg",
+          "/usr/bin/lame"
+        ]
       }
+    },
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "10.15"
     }
   }
 }

@@ -2,18 +2,93 @@
 
 Dieses Repository enthält zwei Varianten:
 
-1) Bash-Skript mit Zenity-Oberfläche (Linux): `convert_to_mp3_Lame.sh`
-2) Plattformunabhängige GUI (Tauri/Rust): `tauri-app/`
+1) Plattformunabhängige GUI (Tauri/Rust): `tauri-app/`
+2) Bash-Skript mit Zenity-Oberfläche (Linux): `convert_to_mp3_Lame.sh`
 
-## Tauri GUI (Rust)
-Experimental: plattformunabhängige GUI auf Basis von Tauri.
+## Funktionen (GUI)
 
-Ordnerstruktur: `tauri-app/`
+- Video zu MP3, Audio zu MP3, Video zu AVI (DivX), Video-Ausschnitt
+- Die Audiospur eines Videos mit den gewählten Lautstärkeoptionen anpassen, ohne das Video neu zu kodieren.
+- Videos per Zweipass-H.264-Kodierung auf eine frei wählbare Maximalgröße komprimieren (Standard: 100 MB).
+- Mehrere Videos in einer änderbaren Reihenfolge ohne Neukodierung zusammenfügen.
+- Das zusammengefügte Video optional anschließend auf die gewählte Maximalgröße komprimieren.
 
-Voraussetzungen fuer Build/Installer (pro Plattform):
-- Windows: Rust, Visual Studio Build Tools, WebView2 Runtime; fuer MSI zusaetzlich WiX
+Beim Zusammenfügen ohne Komprimierung müssen die Video- und Audiostreams der Quelldateien kompatibel sein.
+
+## Installation (fertige Installer)
+
+Die Installer liegen unter **Releases** auf GitHub.
+
+| System | Datei | ffmpeg/lame |
+|---|---|---|
+| Windows | `*_x64-setup.exe` oder `.msi` | enthalten |
+| macOS Apple Silicon | `*_aarch64.dmg` | enthalten |
+| macOS Intel | `*_x64.dmg` | enthalten |
+| Debian/Ubuntu | `.deb` | werden als Abhängigkeit installiert |
+| Fedora/openSUSE | `.rpm` | werden als Abhängigkeit installiert |
+| Linux (andere) | `.AppImage` | vom System nötig (`ffmpeg`, `lame`) |
+
+Die Installer sind nicht signiert:
+- Windows: SmartScreen-Warnung, *Weitere Informationen* > *Trotzdem ausführen*.
+- macOS: beim ersten Start Rechtsklick > *Öffnen*. Meldet macOS, die App sei beschädigt:
+  `xattr -cr "/Applications/Konvertierung Audio-Video.app"`
+
+Linux `.deb` installieren:
+```bash
+sudo apt install ./Konvertierung*.deb
+```
+
+## Entwicklung (Dev-Modus, ohne Neuinstallieren)
+
+Im Dev-Modus läuft die App direkt aus dem Repo:
+- Änderungen an `tauri-app/ui/` (HTML/JS/CSS) werden sofort neu geladen.
+- Änderungen an `tauri-app/src-tauri/` (Rust) werden automatisch neu kompiliert und die App startet neu.
+
+Einmalig einen Starter anlegen:
+
+Windows (PowerShell):
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\dev\install-dev-shortcut.ps1
+```
+Danach im Startmenü **Konvertierung Audio-Video (Dev)** starten (an die Taskleiste anheftbar). Das minimierte Konsolenfenster zeigt die Build-Ausgabe, Schließen beendet die App.
+
+Linux / macOS:
+```bash
+bash scripts/dev/install-dev-launcher.sh
+```
+Linux: Eintrag **Konvertierung Audio-Video (Dev)** im Anwendungsmenü, Log unter `~/.cache/konvertierung-dev.log`.
+macOS: `~/Applications/Konvertierung Audio-Video (Dev).command`.
+
+Starter entfernen: Skript mit `-Remove` (Windows) bzw. `--remove` (Linux/macOS) aufrufen.
+
+Direkt im Terminal geht auch:
+```bash
+cd tauri-app
+cargo tauri dev
+```
+
+Im Dev-Modus werden `ffmpeg`, `ffprobe` und `lame` aus dem `PATH` verwendet, sie müssen also lokal installiert sein. Der erste Start dauert einige Minuten (Kompilieren), danach geht es schnell.
+
+## Release erstellen
+
+1. Version in `tauri-app/src-tauri/Cargo.toml` erhöhen (einzige Stelle für die Version).
+2. Committen, dann Tag setzen und pushen:
+   ```bash
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+3. GitHub Actions (`.github/workflows/release.yml`) baut alle Installer und legt einen **Release-Entwurf** an. Prüfen und unter *Releases* veröffentlichen.
+
+Nur bauen ohne Release: *Actions* > *Release* > *Run workflow*. Die Installer liegen dann als Artefakte am Lauf.
+
+Der Workflow lädt ffmpeg/ffprobe (Windows: BtbN-Builds, macOS: ffmpeg.martin-riedl.de) und lame (Windows: MSYS2, macOS: aus den Quellen gebaut) nach `bin/windows/` bzw. `bin/darwin/` und bündelt sie in die App. Die App sucht diese Programme beim Start im Ressourcen-Ordner `bin/<os>/` und sonst im `PATH`.
+
+## Lokal bauen
+
+Voraussetzungen (pro Plattform):
+- Windows: Rust, Visual Studio Build Tools, WebView2 Runtime; für MSI zusätzlich WiX
 - macOS: Rust, Xcode Command Line Tools
-- Linux: Rust, WebKitGTK + systemnahe Abhaengigkeiten (z.B. `libwebkit2gtk-4.1-dev`, `libssl-dev`, `libgtk-3-dev`)
+- Linux: Rust, WebKitGTK + systemnahe Abhängigkeiten (z.B. `libwebkit2gtk-4.1-dev`, `libssl-dev`, `libgtk-3-dev`)
 
 Install-Beispiele:
 
@@ -36,23 +111,16 @@ Build (Windows, PowerShell):
 ```powershell
 powershell .\build-windows-app.ps1
 ```
+Das Build-Skript installiert Visual Studio Build Tools und Rust auf Wunsch via winget, tauri-cli bei Bedarf via cargo. Die Installer liegen danach unter `tauri-app\src-tauri\target\release\bundle\`.
 
-Install (portable EXE + Startmenueintrag):
+Portable Installation (EXE + Startmenüeintrag, ohne Setup):
 ```powershell
 powershell .\install-windows.ps1
 ```
 
-Hinweise (Windows):
-- Das Build-Skript installiert Visual Studio Build Tools (C++ Workload) und Rust (cargo) auf Wunsch via winget.
-- tauri-cli wird bei Bedarf via cargo installiert.
-- WebView2 Runtime muss vorher vorhanden sein.
-
 macOS:
 ```bash
-# Xcode Command Line Tools
 xcode-select --install
-
-# Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
@@ -69,56 +137,21 @@ Tauri CLI installieren (v2):
 cargo install tauri-cli --version "^2"
 ```
 
-ffmpeg bereitstellen:
-- Systemweit installieren oder
-- im App-Ordner beilegen (z.B. `tauri-app/bin/` oder `tauri-app/bin/<os>`)
-
-Die GUI unterstützt außerdem:
-- Die Audiospur eines Videos mit den gewählten Lautstärkeoptionen anzupassen, ohne das Video neu zu kodieren.
-- Videos per Zweipass-H.264-Kodierung auf eine frei wählbare Maximalgröße zu komprimieren (Standard: 100 MB).
-- Mehrere Videos in einer änderbaren Reihenfolge ohne Neukodierung zusammenzufügen.
-- Das zusammengefügte Video optional anschließend auf die gewählte Maximalgröße zu komprimieren.
-
-Beim Zusammenfügen ohne Komprimierung müssen die Video- und Audiostreams der Quelldateien kompatibel sein.
-
 Preflight-Check (optional):
 ```bash
 tauri-app/scripts/check_deps.sh
 ```
 Windows:
 ```powershell
-tauri-app\\scripts\\check_deps.ps1
+tauri-app\scripts\check_deps.ps1
 ```
 
-Start (nach Installation von Rust + tauri-cli):
-```bash
-cd tauri-app
-cargo tauri dev
-```
-Hinweis: `cargo tauri dev` startet einen lokalen HTTP-Server fuer `tauri-app/ui` auf Port 1420 (via Python 3).
-
-Build (Installer/Bundles):
+Build (Installer/Bundles für das aktuelle System):
 ```bash
 cd tauri-app
 cargo tauri build
 ```
-
-Linux: .deb oder .rpm installieren (nach Build):
-```bash
-# .deb (Debian/Ubuntu)
-sudo dpkg -i tauri-app/src-tauri/target/release/bundle/deb/*.deb
-
-# .rpm (Fedora/RHEL/openSUSE)
-sudo rpm -i tauri-app/src-tauri/target/release/bundle/rpm/*.rpm
-```
-Hinweis: Falls Abhaengigkeiten fehlen, danach `sudo apt -f install` (deb) bzw. `sudo dnf -y install` (rpm) ausfuehren.
-
-Windows: EXE bauen und installieren (portable + Startmenueintrag):
-```powershell
-powershell .\build-windows-app.ps1
-powershell .\install-windows.ps1
-```
-Hinweis: Die EXE liegt nach dem Build unter `tauri-app\src-tauri\target\release\` (z.B. `konvertierung.exe`).
+Ohne `--config src-tauri/ci/<os>.json` werden ffmpeg/lame nicht gebündelt, die App nutzt dann die Programme aus dem `PATH`.
 
 ## Bash-Skript (Linux)
 Voraussetzungen: `ffmpeg`, `lame`, `zenity`
@@ -128,25 +161,23 @@ Installation unter Debian/Ubuntu:
 sudo apt install ffmpeg lame zenity
 ```
 
-Projektstruktur (Ausschnitt):
-```
-convert_to_mp3_Lame.sh                     # Bash-Hauptskript
-tauri-app/                                  # Tauri GUI (Rust)
+Installation des Skripts:
+```bash
+sudo install -m 755 convert_to_mp3_Lame.sh /usr/local/bin/convert_to_mp3_Lame.sh
+/usr/local/bin/convert_to_mp3_Lame.sh
 ```
 
-### Installation des Bash-Skripts
-1. Skript ausführbar machen:
-   ```bash
-   chmod +x convert_to_mp3_Lame.sh
-   ```
-2. Systemweit nach `/usr/local/bin` installieren (erfordert sudo):
-   ```bash
-   sudo install -m 755 convert_to_mp3_Lame.sh /usr/local/bin/convert_to_mp3_Lame.sh
-   ```
-3. Testen, ob das Skript läuft:
-   ```bash
-   /usr/local/bin/convert_to_mp3_Lame.sh
-   ```
+## Projektstruktur (Ausschnitt)
+```
+tauri-app/                     # Tauri GUI (Rust + HTML/JS)
+  src-tauri/ci/                # Zusatz-Config für CI (ffmpeg/lame bündeln)
+scripts/dev/                   # Dev-Starter (Windows/Linux/macOS)
+scripts/ci/                    # Hilfsskripte für GitHub Actions
+.github/workflows/release.yml  # Installer bauen und Release anlegen
+convert_to_mp3_Lame.sh         # Bash-Variante
+```
 
 ## Lizenz
 GNU General Public License v3.0 (GPL-3.0). Siehe `LICENSE`.
+
+Mitgelieferte Programme: ffmpeg (GPL, https://ffmpeg.org) und LAME (LGPL, https://lame.sourceforge.io). Die Quellen sind auf den jeweiligen Projektseiten verfügbar.
