@@ -20,15 +20,19 @@ jobs:
         include:
           - name: Windows x64
             platform: windows-latest
+            label: windows-x64
             args: --config src-tauri/ci/windows.json
           - name: macOS Apple Silicon
             platform: macos-latest
+            label: macos-arm64
             args: --config src-tauri/ci/macos.json
           - name: macOS Intel
             platform: macos-15-intel
+            label: macos-x64
             args: --config src-tauri/ci/macos.json
           - name: Linux x64
             platform: ubuntu-22.04
+            label: linux-x64
             args: ''
     runs-on: ${{ matrix.platform }}
 
@@ -132,6 +136,6 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v6
         with:
-          name: installer-${{ matrix.platform }}
+          name: Konvertierung-Audio-Video_${{ steps.tauri.outputs.appVersion }}_${{ matrix.label }}
           path: ${{ join(fromJSON(steps.tauri.outputs.artifactPaths), fromJSON('"\n"')) }}
           if-no-files-found: error
