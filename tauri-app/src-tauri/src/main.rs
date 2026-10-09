@@ -1211,7 +1211,39 @@ async fn remove_clip(
     }
 }
 
+/// AppUserModelID fuer die Windows-Taskleiste. Muss mit der ID in der
+/// Startmenue-Verknuepfung uebereinstimmen, damit Windows das Fenster der
+/// Verknuepfung zuordnet und beim Anheften diese statt der EXE pinnt.
+/// Release = Bundle-Identifier aus tauri.conf.json (setzen auch NSIS/MSI),
+/// Debug (cargo tauri dev) = eigene ID fuer die Dev-Verknuepfung.
+#[cfg(target_os = "windows")]
+const APP_USER_MODEL_ID: &str = if cfg!(debug_assertions) {
+    "de.michael.konvertierung.dev"
+} else {
+    "de.michael.konvertierung"
+};
+
+#[cfg(target_os = "windows")]
+fn set_app_user_model_id() {
+    #[link(name = "shell32")]
+    extern "system" {
+        fn SetCurrentProcessExplicitAppUserModelID(app_id: *const u16) -> i32;
+    }
+    let wide: Vec<u16> = APP_USER_MODEL_ID
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
+    // Fehler sind unkritisch: dann gruppiert Windows nur nach EXE-Pfad.
+    unsafe {
+        SetCurrentProcessExplicitAppUserModelID(wide.as_ptr());
+    }
+}
+
 fn main() {
+    // Vor dem Erzeugen des ersten Fensters setzen.
+    #[cfg(target_os = "windows")]
+    set_app_user_model_id();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState {

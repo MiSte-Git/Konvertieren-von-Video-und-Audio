@@ -24,26 +24,6 @@ function Get-LatestExe($exeDir) {
     Sort-Object LastWriteTime -Descending | Select-Object -First 1
 }
 
-function Get-LameVersion {
-  $lameCmd = Get-Command "lame" -ErrorAction SilentlyContinue
-  if (-not $lameCmd) { return $null }
-  try {
-    $out = & $lameCmd.Source --version 2>$null
-    if (-not $out) { return $null }
-    foreach ($line in $out) {
-      if ($line -match 'version\s+([0-9]+(?:\.[0-9]+)*)') {
-        return $matches[1]
-      }
-      if ($line -match 'LAME\s+([0-9]+(?:\.[0-9]+)*)') {
-        return $matches[1]
-      }
-    }
-  } catch {
-    return $null
-  }
-  return $null
-}
-
 # In Repo-Root arbeiten (wo das Script liegt)
 $ScriptDir = Resolve-RepoRoot
 Set-Location $ScriptDir
@@ -85,12 +65,7 @@ if ($AllUsers) {
   $Programs = [Environment]::GetFolderPath('Programs')
 }
 
-$LameVersion = Get-LameVersion
-$DisplayName = if ($LameVersion) {
-  "Konvertierung von Video zu Audio (MP3 with Lame $LameVersion and DivX)"
-} else {
-  "Konvertierung von Video zu Audio (MP3 with Lame and DivX)"
-}
+$DisplayName = "Konvertierung Audio-Video"
 
 $ShortcutDir = Join-Path $Programs $AppName
 New-Item -ItemType Directory -Force -Path $ShortcutDir | Out-Null
@@ -109,6 +84,10 @@ if (Test-Path $IconIco) {
   $Shortcut.IconLocation = "$($Shortcut.TargetPath),0"
 }
 $Shortcut.Save()
+
+# Gleiche ID wie die Release-Build der App (main.rs) und die NSIS/MSI-Installer.
+. (Join-Path $ScriptDir "scripts\windows\Set-LnkAppUserModelId.ps1")
+Set-LnkAppUserModelId -Path $ShortcutPath -AppId "de.michael.konvertierung"
 
 Write-Host "Installiert nach: $InstallDir"
 Write-Host "Startmenü-Eintrag: $ShortcutPath"

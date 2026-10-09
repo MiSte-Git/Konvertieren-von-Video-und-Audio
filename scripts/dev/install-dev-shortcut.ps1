@@ -29,5 +29,10 @@ $Shortcut.Description = "Startet die App aus $Repo (cargo tauri dev)"
 if (Test-Path $Icon) { $Shortcut.IconLocation = "$Icon,0" }
 $Shortcut.Save()
 
+# Gleiche ID wie die Debug-Build der App (main.rs), damit das App-Fenster
+# zu dieser Verknuepfung gehoert und Anheften die Verknuepfung pinnt.
+. (Join-Path $Repo "scripts\windows\Set-LnkAppUserModelId.ps1")
+Set-LnkAppUserModelId -Path $ShortcutPath -AppId "de.michael.konvertierung.dev"
+
 Write-Host "Startmenue-Eintrag angelegt: $ShortcutPath"
 Write-Host "Hinweis: Das minimierte Konsolenfenster zeigt die Build-Ausgabe. Schliessen beendet die App."
