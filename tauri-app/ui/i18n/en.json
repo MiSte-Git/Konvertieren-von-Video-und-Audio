@@ -1,0 +1,153 @@
+{
+  "app": {
+    "about": "About",
+    "version": "Version {version}",
+    "versionUnknown": "Version unknown"
+  },
+  "lang": {
+    "label": "Language"
+  },
+  "mode": {
+    "title": "Mode",
+    "v2mp3": "Video to MP3",
+    "a2mp3": "Audio to MP3",
+    "adjustvideoaudio": "Adjust audio track in video",
+    "divx": "Video to AVI (DivX)",
+    "clip": "Video clip",
+    "targetsize": "Compress video to target size",
+    "join": "Join videos"
+  },
+  "audio": {
+    "title": "Audio output options",
+    "adjustment": "Volume adjustment",
+    "option": {
+      "none": "None",
+      "normalize": "Normalize",
+      "speech": "Balance speech",
+      "strong": "Balance strong differences"
+    },
+    "help": {
+      "none": "The volume is not changed.",
+      "normalize": "Adjusts the overall loudness of the file.",
+      "speech": "Evens out different speaker volumes and limits volume peaks.",
+      "strong": "For recordings with very quiet voices and sudden very loud passages."
+    }
+  },
+  "join": {
+    "title": "Order",
+    "help": "The videos are joined from top to bottom. Use the arrows to change the order.",
+    "up": "Move up",
+    "down": "Move down",
+    "compressAfter": "Compress to this target size after joining",
+    "copyHint": "Without compression the streams are copied unchanged. The videos must have compatible video, audio and format settings."
+  },
+  "target": {
+    "title": "Target size",
+    "maxSize": "Maximum size"
+  },
+  "files": {
+    "title": "Files",
+    "source": "Source",
+    "sourcePlaceholder": "Choose source file",
+    "browseSource": "Choose source",
+    "target": "Target",
+    "targetPlaceholder": "Target file (optional)",
+    "targetAuto": "Created automatically for each file",
+    "browseTarget": "Choose target",
+    "selectedCount": "{count} files selected",
+    "filterName": "Video/Audio"
+  },
+  "clip": {
+    "title": "Clip",
+    "start": "Start (HH:MM:SS)",
+    "end": "End (HH:MM:SS)",
+    "only": "Save clip only",
+    "onlyInfo": "The original stays unchanged.",
+    "minus": "Remove clip",
+    "minusInfo": "The original is kept and a copy is created in which the given section has been removed."
+  },
+  "actions": {
+    "start": "Start",
+    "cancel": "Cancel",
+    "logPath": "Log path"
+  },
+  "status": {
+    "ready": "Ready.",
+    "wait": "Please wait ...",
+    "progress": "{done} / {total} (remaining {remaining})",
+    "batchFile": "File {index}/{total}",
+    "batchSuffix": " File {index}/{total}",
+    "selectedJoin": "{count} videos selected. The order can be changed below.",
+    "selectedBatch": "{count} files selected. Each output is saved next to its source.",
+    "needInputs": "Please choose at least one source file.",
+    "needInput": "Please choose a source file.",
+    "needTargetSize": "Please enter a target size of at least 1 MB.",
+    "needTwoVideos": "Please choose at least two videos.",
+    "joinCompress": "Joining and compressing videos ...",
+    "join": "Joining videos ...",
+    "compress": "Compressing video to at most {mb} MB ...",
+    "needClipTimes": "Please enter start/end in HH:MM:SS format.",
+    "clipRemove": "Removing clip ...",
+    "clipCut": "Cutting clip ...",
+    "converting": "Converting ...",
+    "done": "Done in {elapsed}.",
+    "batchDone": "{count} files done in {elapsed}.",
+    "cancelled": "Cancelled.",
+    "error": "Error: {message}",
+    "warning": "Warning: {message}",
+    "cancelRequested": "Requesting cancellation ...",
+    "cancelRunning": "Cancelling ...",
+    "cancelQueued": "Cancellation queued ...",
+    "logFile": "Log file: {path}",
+    "logFileCopied": "Log file: {path}\n(Path copied to clipboard.)"
+  },
+  "dialog": {
+    "logTitle": "Log path",
+    "lameTitle": "LAME check",
+    "lameFailed": "LAME check failed."
+  },
+  "about": {
+    "description": "Converts, cuts, compresses and joins audio and video files.",
+    "author": "Author",
+    "license": "License",
+    "source": "Source code",
+    "base": "Based on",
+    "uses": "Uses",
+    "close": "Close"
+  },
+  "errors": {
+    "log_path_unavailable": "Could not determine the log path.",
+    "output_dir_create": "Could not create the output folder",
+    "ffprobe_start": "Could not start ffprobe",
+    "ffprobe_duration_failed": "ffprobe failed to determine the duration.",
+    "ffprobe_tags_failed": "ffprobe failed to check the MP3 encoder tags.",
+    "duration_unreadable": "Could not read the duration.",
+    "duration_invalid": "The video duration is invalid.",
+    "duration_unknown": "Could not determine the video duration.",
+    "unknown_audio_adjustment": "Unknown volume adjustment.",
+    "unknown_mode": "Unknown mode.",
+    "empty_command": "Empty ffmpeg/lame command.",
+    "ffmpeg_start": "Could not start ffmpeg",
+    "ffmpeg_read": "Could not read ffmpeg output",
+    "ffmpeg_stdout_unavailable": "ffmpeg output not available.",
+    "ffmpeg_failed": "ffmpeg failed (exit code {exit})",
+    "lame_start": "Could not start lame",
+    "lame_failed": "lame failed (exit code {exit})",
+    "lame_tag_missing": "The MP3 was not encoded with LAME (no LAME encoder tag found).",
+    "lame_version_mismatch": "The MP3 encoder tag does not contain the installed LAME version ({version}).",
+    "lock_error": "Internal lock error.",
+    "kill_failed": "Could not stop the process",
+    "no_running_process": "No running process.",
+    "invalid_input": "Please choose a valid input file.",
+    "input_not_found": "Input file not found: {path}",
+    "same_input_output": "Source and target must not be the same.",
+    "target_size_min": "The target size must be at least 1 MB.",
+    "target_size_too_small": "The chosen target size is too small for the length of the video.",
+    "join_min_two": "Please choose at least two videos.",
+    "join_output_overwrites_input": "The target must not overwrite any of the source files.",
+    "path_unreadable": "Could not read path ({path})",
+    "temp_list_create": "Could not create the temporary file list",
+    "time_format_invalid": "Invalid time format. Please use HH:MM:SS.",
+    "task_failed": "Internal processing error"
+  }
+}

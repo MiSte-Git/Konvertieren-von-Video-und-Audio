@@ -18,6 +18,24 @@ struct AppState {
     progress: Arc<Mutex<Option<HashMap<String, String>>>>,
 }
 
+/// Fehler gehen als JSON-Code ans UI, z.B. {"code":"invalid_input","params":{}}.
+/// Die Uebersetzung passiert im UI (ui/i18n/<lang>.json, Schluessel errors.<code>).
+fn app_err(code: &str) -> String {
+    app_err_with(code, &[])
+}
+
+fn app_err_with(code: &str, params: &[(&str, String)]) -> String {
+    let params: serde_json::Map<String, serde_json::Value> = params
+        .iter()
+        .map(|(k, v)| (k.to_string(), serde_json::Value::String(v.clone())))
+        .collect();
+    serde_json::json!({ "code": code, "params": params }).to_string()
+}
+
+fn exit_code(code: Option<i32>) -> String {
+    code.map(|c| c.to_string()).unwrap_or_else(|| "-".to_string())
+}
+
 fn apply_no_window(_cmd: &mut Command) {
     #[cfg(target_os = "windows")]
     {
@@ -59,7 +77,7 @@ fn get_log_path(app: AppHandle) -> Result<String, String> {
         .path()
         .app_log_dir()
         .or_else(|_| app.path().app_data_dir())
-        .map_err(|_| "Log-Pfad konnte nicht bestimmt werden.".to_string())?;
+        .map_err(|_| app_err("log_path_unavailable"))?;
     let log_path = dir.join("konvertierung.log");
     Ok(log_path.to_string_lossy().to_string())
 }
@@ -107,7 +125,7 @@ fn ensure_output_dir(output_path: &str) -> Result<(), String> {
     if let Some(dir) = Path::new(output_path).parent() {
         if !dir.as_os_str().is_empty() {
             std::fs::create_dir_all(dir)
-                .map_err(|e| format!("Ausgabeordner kann nicht erstellt werden: {e}"))?;
+                .map_err(|e| app_err_with("output_dir_create", &[("detail", e.to_string())]))?;
         }
     }
     Ok(())
@@ -127,16 +145,16 @@ fn probe_duration(input: &str) -> Result<f64, String> {
             &input,
         ])
         .output()
-        .map_err(|e| format!("ffprobe konnte nicht gestartet werden: {e}"))?;
+        .map_err(|e| app_err_with("ffprobe_start", &[("detail", e.to_string())]))?;
     if !output.status.success() {
-        return Err("ffprobe fehlgeschlagen beim Ermitteln der Dauer.".into());
+        return Err(app_err("ffprobe_duration_failed"));
     }
     let raw = String::from_utf8_lossy(&output.stdout).trim().to_string();
     let duration = raw
         .parse::<f64>()
-        .map_err(|_| "Dauer konnte nicht gelesen werden.".to_string())?;
+        .map_err(|_| app_err("duration_unreadable"))?;
     if !duration.is_finite() || duration <= 0.0 {
-        return Err("Die Videodauer ist ungültig.".into());
+        return Err(app_err("duration_invalid"));
     }
     Ok(duration)
 }
@@ -165,7 +183,7 @@ fn get_audio_filter(mode: Option<&str>) -> Result<Option<&'static str>, String> 
         "strong" => Ok(Some(
             "dynaudnorm=f=500:g=12:p=0.85,acompressor=threshold=-20dB:ratio=4:attack=15:release=300,alimiter=limit=0.90",
         )),
-        _ => Err("Unbekannte Lautstärkeanpassung".into()),
+        _ => Err(app_err("unknown_audio_adjustment")),
     }
 }
 
@@ -209,7 +227,7 @@ fn build_audio_mp3_ffmpeg_args(
         .into_iter()
         .map(String::from)
         .collect(),
-        _ => return Err("Unbekannter Modus".into()),
+        _ => return Err(app_err("unknown_mode")),
     };
 
     if let Some(filter) = get_audio_filter(audio_adjustment)? {
@@ -262,7 +280,7 @@ fn run_ffmpeg(
     app: AppHandle,
 ) -> Result<(), String> {
     if args.is_empty() {
-        return Err("Leerer ffmpeg-Befehl".into());
+        return Err(app_err("empty_command"));
     }
     if !args.iter().any(|a| a == "-progress") && args.len() >= 2 {
         let output = args.pop().unwrap_or_default();
@@ -277,9 +295,9 @@ fn run_ffmpeg(
         .stderr(Stdio::inherit());
     let mut child = cmd
         .spawn()
-        .map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
+        .map_err(|e| app_err_with("ffmpeg_start", &[("detail", e.to_string())]))?;
     {
-        let mut guard = current_pid.lock().map_err(|_| "Lock-Fehler".to_string())?;
+        let mut guard = current_pid.lock().map_err(|_| app_err("lock_error"))?;
         *guard = Some(child.id());
     }
     if let Some(stdout) = child.stdout.take() {
@@ -287,7 +305,7 @@ fn run_ffmpeg(
         let mut values: HashMap<String, String> = HashMap::new();
         for line in reader.lines() {
             let line =
-                line.map_err(|e| format!("ffmpeg-Ausgabe konnte nicht gelesen werden: {e}"))?;
+                line.map_err(|e| app_err_with("ffmpeg_read", &[("detail", e.to_string())]))?;
             if let Some((key, value)) = line.split_once('=') {
                 values.insert(key.to_string(), value.to_string());
                 if let Ok(mut guard) = progress_state.lock() {
@@ -304,7 +322,7 @@ fn run_ffmpeg(
     }
     let status = child
         .wait()
-        .map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
+        .map_err(|e| app_err_with("ffmpeg_start", &[("detail", e.to_string())]))?;
     if let Ok(mut guard) = current_pid.lock() {
         *guard = None;
     }
@@ -312,9 +330,9 @@ fn run_ffmpeg(
         *guard = None;
     }
     if !status.success() {
-        return Err(format!(
-            "ffmpeg fehlgeschlagen (Exit-Code {:?})",
-            status.code()
+        return Err(app_err_with(
+            "ffmpeg_failed",
+            &[("exit", exit_code(status.code())), ("detail", String::new())],
         ));
     }
     Ok(())
@@ -329,7 +347,7 @@ fn run_ffmpeg_lame(
     app: AppHandle,
 ) -> Result<(), String> {
     if ffmpeg_args.is_empty() || lame_args.is_empty() {
-        return Err("Leerer ffmpeg/lame-Befehl".into());
+        return Err(app_err("empty_command"));
     }
 
     let mut ffmpeg_cmd = Command::new(&ffmpeg_args[0]);
@@ -340,17 +358,17 @@ fn run_ffmpeg_lame(
         .stderr(Stdio::piped());
     let mut ffmpeg_child = ffmpeg_cmd
         .spawn()
-        .map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
+        .map_err(|e| app_err_with("ffmpeg_start", &[("detail", e.to_string())]))?;
 
     {
-        let mut guard = current_pid.lock().map_err(|_| "Lock-Fehler".to_string())?;
+        let mut guard = current_pid.lock().map_err(|_| app_err("lock_error"))?;
         *guard = Some(ffmpeg_child.id());
     }
 
     let ffmpeg_stdout = ffmpeg_child
         .stdout
         .take()
-        .ok_or("ffmpeg-stdout nicht verfügbar".to_string())?;
+        .ok_or_else(|| app_err("ffmpeg_stdout_unavailable"))?;
     let mut lame_cmd = Command::new(&lame_args[0]);
     apply_no_window(&mut lame_cmd);
     lame_cmd
@@ -360,7 +378,7 @@ fn run_ffmpeg_lame(
         .stderr(Stdio::inherit());
     let mut lame_child = lame_cmd
         .spawn()
-        .map_err(|e| format!("lame konnte nicht gestartet werden: {e}"))?;
+        .map_err(|e| app_err_with("lame_start", &[("detail", e.to_string())]))?;
 
     let mut ffmpeg_error_lines: Vec<String> = Vec::new();
     if let Some(stderr) = ffmpeg_child.stderr.take() {
@@ -368,7 +386,7 @@ fn run_ffmpeg_lame(
         let mut values: HashMap<String, String> = HashMap::new();
         for line in reader.lines() {
             let line =
-                line.map_err(|e| format!("ffmpeg-Ausgabe konnte nicht gelesen werden: {e}"))?;
+                line.map_err(|e| app_err_with("ffmpeg_read", &[("detail", e.to_string())]))?;
             if let Some((key, value)) = line.split_once('=') {
                 values.insert(key.to_string(), value.to_string());
                 if let Ok(mut guard) = progress_state.lock() {
@@ -388,7 +406,7 @@ fn run_ffmpeg_lame(
 
     let ffmpeg_status = ffmpeg_child
         .wait()
-        .map_err(|e| format!("ffmpeg konnte nicht gestartet werden: {e}"))?;
+        .map_err(|e| app_err_with("ffmpeg_start", &[("detail", e.to_string())]))?;
     if !ffmpeg_status.success() {
         let _ = lame_child.kill();
         let _ = lame_child.wait();
@@ -398,21 +416,18 @@ fn run_ffmpeg_lame(
         if let Ok(mut guard) = progress_state.lock() {
             *guard = None;
         }
-        let details = if ffmpeg_error_lines.is_empty() {
-            String::new()
-        } else {
-            format!(": {}", ffmpeg_error_lines.join("\n"))
-        };
-        return Err(format!(
-            "ffmpeg fehlgeschlagen (Exit-Code {:?}){}",
-            ffmpeg_status.code(),
-            details
+        return Err(app_err_with(
+            "ffmpeg_failed",
+            &[
+                ("exit", exit_code(ffmpeg_status.code())),
+                ("detail", ffmpeg_error_lines.join("\n")),
+            ],
         ));
     }
 
     let lame_status = lame_child
         .wait()
-        .map_err(|e| format!("lame konnte nicht gestartet werden: {e}"))?;
+        .map_err(|e| app_err_with("lame_start", &[("detail", e.to_string())]))?;
 
     if let Ok(mut guard) = current_pid.lock() {
         *guard = None;
@@ -421,9 +436,9 @@ fn run_ffmpeg_lame(
         *guard = None;
     }
     if !lame_status.success() {
-        return Err(format!(
-            "lame fehlgeschlagen (Exit-Code {:?})",
-            lame_status.code()
+        return Err(app_err_with(
+            "lame_failed",
+            &[("exit", exit_code(lame_status.code()))],
         ));
     }
     if let Err(warn) = verify_lame_output(&output_path) {
@@ -478,21 +493,22 @@ fn verify_lame_output(path: &str) -> Result<(), String> {
             path,
         ])
         .output()
-        .map_err(|e| format!("ffprobe konnte nicht gestartet werden: {e}"))?;
+        .map_err(|e| app_err_with("ffprobe_start", &[("detail", e.to_string())]))?;
 
     if !output.status.success() {
-        return Err("ffprobe fehlgeschlagen beim Prüfen der MP3-Encoder-Tags.".into());
+        return Err(app_err("ffprobe_tags_failed"));
     }
 
     let tags = String::from_utf8_lossy(&output.stdout);
     if !tags.to_ascii_lowercase().contains("lame") {
-        return Err("MP3 wurde nicht mit LAME kodiert (kein LAME-Encoder-Tag gefunden).".into());
+        return Err(app_err("lame_tag_missing"));
     }
 
     if let Some(expected) = get_lame_version() {
         if !tags.contains(&expected) {
-            return Err(format!(
-                "MP3-Encoder-Tag enthält nicht die installierte LAME-Version ({expected})."
+            return Err(app_err_with(
+                "lame_version_mismatch",
+                &[("version", expected)],
             ));
         }
     }
@@ -505,6 +521,17 @@ mod tests {
 
     fn has_arg(args: &[String], value: &str) -> bool {
         args.iter().any(|arg| arg == value)
+    }
+
+    #[test]
+    fn app_err_produces_code_json() {
+        let v: serde_json::Value =
+            serde_json::from_str(&app_err_with("input_not_found", &[("path", "a\"b".into())]))
+                .unwrap();
+        assert_eq!(v["code"], "input_not_found");
+        assert_eq!(v["params"]["path"], "a\"b");
+        let v: serde_json::Value = serde_json::from_str(&app_err("invalid_input")).unwrap();
+        assert_eq!(v["code"], "invalid_input");
     }
 
     #[test]
@@ -603,7 +630,7 @@ fn get_media_duration(input: String) -> Result<f64, String> {
 
 fn probe_media_duration(input: &str) -> Result<f64, String> {
     if !Path::new(&input).is_file() {
-        return Err("Bitte eine gültige Eingabedatei wählen.".into());
+        return Err(app_err("invalid_input"));
     }
     probe_duration(&input)
 }
@@ -614,9 +641,9 @@ fn kill_pid(pid: u32) -> Result<(), String> {
         .arg("-TERM")
         .arg(pid.to_string())
         .status()
-        .map_err(|e| format!("kill fehlgeschlagen: {e}"))?;
+        .map_err(|e| app_err_with("kill_failed", &[("detail", e.to_string())]))?;
     if !status.success() {
-        return Err("kill fehlgeschlagen".into());
+        return Err(app_err_with("kill_failed", &[("detail", String::new())]));
     }
     Ok(())
 }
@@ -628,9 +655,9 @@ fn kill_pid(pid: u32) -> Result<(), String> {
     let status = cmd
         .args(["/PID", &pid.to_string(), "/T", "/F"])
         .status()
-        .map_err(|e| format!("taskkill fehlgeschlagen: {e}"))?;
+        .map_err(|e| app_err_with("kill_failed", &[("detail", e.to_string())]))?;
     if !status.success() {
-        return Err("taskkill fehlgeschlagen".into());
+        return Err(app_err_with("kill_failed", &[("detail", String::new())]));
     }
     Ok(())
 }
@@ -640,7 +667,7 @@ fn cancel_current(state: State<AppState>) -> Result<(), String> {
     let mut guard = state
         .current_pid
         .lock()
-        .map_err(|_| "Lock-Fehler".to_string())?;
+        .map_err(|_| app_err("lock_error"))?;
     if let Some(pid) = *guard {
         kill_pid(pid)?;
         *guard = None;
@@ -649,7 +676,7 @@ fn cancel_current(state: State<AppState>) -> Result<(), String> {
         }
         return Ok(());
     }
-    Err("Kein laufender Prozess.".into())
+    Err(app_err("no_running_process"))
 }
 
 #[tauri::command]
@@ -678,10 +705,10 @@ async fn convert_media(
         ),
     );
     if !Path::new(&input).is_file() {
-        return Err("Bitte eine gültige Eingabedatei wählen.".into());
+        return Err(app_err("invalid_input"));
     }
     if mode == "adjustvideoaudio" && Path::new(&input) == Path::new(&output) {
-        return Err("Quelle und Ziel dürfen nicht identisch sein.".into());
+        return Err(app_err("same_input_output"));
     }
     ensure_output_dir(&output)?;
 
@@ -748,7 +775,7 @@ async fn convert_media(
         .into_iter()
         .map(String::from)
         .collect(),
-        _ => return Err("Unbekannter Modus".into()),
+        _ => return Err(app_err("unknown_mode")),
     };
 
     let current_pid = state.current_pid.clone();
@@ -779,7 +806,7 @@ async fn convert_media(
         }
     })
     .await
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| app_err_with("task_failed", &[("detail", e.to_string())]))?;
 
     match result {
         Ok(()) => {
@@ -796,17 +823,17 @@ async fn convert_media(
 
 fn target_video_bitrate_kbit(target_size_mb: f64, duration_sec: f64) -> Result<u64, String> {
     if !target_size_mb.is_finite() || target_size_mb < 1.0 {
-        return Err("Die Zielgröße muss mindestens 1 MB betragen.".into());
+        return Err(app_err("target_size_min"));
     }
     if !duration_sec.is_finite() || duration_sec <= 0.0 {
-        return Err("Die Videodauer konnte nicht ermittelt werden.".into());
+        return Err(app_err("duration_unknown"));
     }
     const AUDIO_KBIT: f64 = 128.0;
     // Fünf Prozent Reserve für MP4-Container und Schwankungen der Zweipass-Kodierung.
     let total_kbit = target_size_mb * 0.95 * 8192.0 / duration_sec;
     let video_kbit = total_kbit - AUDIO_KBIT;
     if video_kbit < 50.0 {
-        return Err("Die gewählte Zielgröße ist für die Dauer des Videos zu klein.".into());
+        return Err(app_err("target_size_too_small"));
     }
     Ok(video_kbit.floor() as u64)
 }
@@ -912,10 +939,10 @@ async fn compress_to_size(
     app: AppHandle,
 ) -> Result<(), String> {
     if !Path::new(&input).is_file() {
-        return Err("Bitte eine gültige Eingabedatei wählen.".into());
+        return Err(app_err("invalid_input"));
     }
     if Path::new(&input) == Path::new(&output) {
-        return Err("Quelle und Ziel dürfen nicht identisch sein.".into());
+        return Err(app_err("same_input_output"));
     }
     ensure_output_dir(&output)?;
     let duration = probe_media_duration(&input)?;
@@ -947,7 +974,7 @@ async fn compress_to_size(
         result
     })
     .await
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| app_err_with("task_failed", &[("detail", e.to_string())]))?;
     if let Err(ref err) = result {
         log_line(&app, &format!("compress error={err}"));
     } else {
@@ -966,14 +993,14 @@ async fn join_videos(
     app: AppHandle,
 ) -> Result<(), String> {
     if inputs.len() < 2 {
-        return Err("Bitte mindestens zwei Videos auswählen.".into());
+        return Err(app_err("join_min_two"));
     }
     for input in &inputs {
         if !Path::new(input).is_file() {
-            return Err(format!("Eingabedatei nicht gefunden: {input}"));
+            return Err(app_err_with("input_not_found", &[("path", input.clone())]));
         }
         if Path::new(input) == Path::new(&output) {
-            return Err("Das Ziel darf keine der Quelldateien überschreiben.".into());
+            return Err(app_err("join_output_overwrites_input"));
         }
     }
     ensure_output_dir(&output)?;
@@ -994,12 +1021,17 @@ async fn join_videos(
         .map(|path| {
             std::fs::canonicalize(path)
                 .map(|absolute| concat_file_line(&absolute.to_string_lossy()))
-                .map_err(|e| format!("Pfad konnte nicht gelesen werden ({path}): {e}"))
+                .map_err(|e| {
+                    app_err_with(
+                        "path_unreadable",
+                        &[("path", path.clone()), ("detail", e.to_string())],
+                    )
+                })
         })
         .collect::<Result<Vec<_>, _>>()?
         .concat();
     std::fs::write(&list_path, list_content)
-        .map_err(|e| format!("Temporäre Dateiliste konnte nicht erstellt werden: {e}"))?;
+        .map_err(|e| app_err_with("temp_list_create", &[("detail", e.to_string())]))?;
     let list_string = list_path.to_string_lossy().to_string();
     let concat_input = vec![
         "-f".to_string(),
@@ -1056,7 +1088,7 @@ async fn join_videos(
         result
     })
     .await
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| app_err_with("task_failed", &[("detail", e.to_string())]))?;
     if let Err(ref err) = result {
         log_line(&app, &format!("join error={err}"));
     } else {
@@ -1083,10 +1115,10 @@ async fn clip_media(
         ),
     );
     if !Path::new(&input).is_file() {
-        return Err("Bitte eine gültige Eingabedatei wählen.".into());
+        return Err(app_err("invalid_input"));
     }
     if !is_hh_mm_ss(&start) || !is_hh_mm_ss(&end) {
-        return Err("Zeitformat ungültig. Bitte HH:MM:SS verwenden.".into());
+        return Err(app_err("time_format_invalid"));
     }
     ensure_output_dir(&output)?;
 
@@ -1103,7 +1135,7 @@ async fn clip_media(
         run_ffmpeg(args_owned, current_pid, progress_state, app_handle)
     })
     .await
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| app_err_with("task_failed", &[("detail", e.to_string())]))?;
 
     match result {
         Ok(()) => {
@@ -1136,10 +1168,10 @@ async fn remove_clip(
         ),
     );
     if !Path::new(&input).is_file() {
-        return Err("Bitte eine gültige Eingabedatei wählen.".into());
+        return Err(app_err("invalid_input"));
     }
     if !is_hh_mm_ss(&start) || !is_hh_mm_ss(&end) {
-        return Err("Zeitformat ungültig. Bitte HH:MM:SS verwenden.".into());
+        return Err(app_err("time_format_invalid"));
     }
     ensure_output_dir(&output)?;
 
@@ -1156,7 +1188,7 @@ async fn remove_clip(
 
     let list_content = format!("file '{}'\nfile '{}'\n", part1.display(), part2.display());
     std::fs::write(&list_path, list_content)
-        .map_err(|e| format!("list.txt konnte nicht erstellt werden: {e}"))?;
+        .map_err(|e| app_err_with("temp_list_create", &[("detail", e.to_string())]))?;
 
     let part1_str = part1.to_string_lossy().to_string();
     let part2_str = part2.to_string_lossy().to_string();
@@ -1196,7 +1228,7 @@ async fn remove_clip(
         Ok(())
     })
     .await
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| app_err_with("task_failed", &[("detail", e.to_string())]))?;
 
     match result {
         Ok(()) => {

@@ -1,5 +1,7 @@
 # Konvertierung Audio-Video
 
+Deutsch | [English](README.en.md)
+
 Dieses Repository enthält zwei Varianten:
 
 1) Plattformunabhängige GUI (Tauri/Rust): `tauri-app/`
@@ -12,8 +14,24 @@ Dieses Repository enthält zwei Varianten:
 - Videos per Zweipass-H.264-Kodierung auf eine frei wählbare Maximalgröße komprimieren (Standard: 100 MB).
 - Mehrere Videos in einer änderbaren Reihenfolge ohne Neukodierung zusammenfügen.
 - Das zusammengefügte Video optional anschließend auf die gewählte Maximalgröße komprimieren.
+- Oberfläche auf Deutsch und Englisch, umschaltbar über die Flaggen oben im Fenster (siehe [Sprachen](#sprachen)).
+- Versionsanzeige unter dem Titel und Dialog **Über** mit Version, Lizenz und verwendeten Komponenten.
 
 Beim Zusammenfügen ohne Komprimierung müssen die Video- und Audiostreams der Quelldateien kompatibel sein.
+
+## Sprachen
+
+Die Oberfläche gibt es auf Deutsch und Englisch.
+- Beim ersten Start wird die Systemsprache verwendet. Ist sie nicht verfügbar, startet die App auf Englisch.
+- Über die Flaggen oberhalb des Titels lässt sich die Sprache jederzeit wechseln. Die Auswahl wird gespeichert (`localStorage`).
+- Fehlermeldungen aus dem Rust-Teil kommen als Fehlercodes ans UI und werden dort übersetzt.
+
+Neue Sprache hinzufügen (z.B. Spanisch):
+1. `tauri-app/ui/i18n/de.json` nach `es.json` kopieren und übersetzen (Platzhalter wie `{count}` beibehalten).
+2. Flagge als `tauri-app/ui/assets/flags/es.png` (22 px breit) und `es@2x.png` ablegen.
+3. In `tauri-app/ui/app.js` die Liste `LANGUAGES` um `{ code: "es", name: "Español" }` ergänzen.
+
+Statische Texte im HTML tragen `data-i18n` (bzw. `data-i18n-title`, `data-i18n-placeholder`, `data-i18n-aria-label`), Texte aus JavaScript laufen über `t("schluessel", { param })`. Neue Rust-Fehler mit `app_err("code")` bzw. `app_err_with("code", &[("param", wert)])` erzeugen und den Schlüssel `errors.code` in allen Sprachdateien ergänzen.
 
 ## Installation (fertige Installer)
 
@@ -71,13 +89,18 @@ Im Dev-Modus werden `ffmpeg`, `ffprobe` und `lame` aus dem `PATH` verwendet, sie
 
 ## Release erstellen
 
-1. Version in `tauri-app/src-tauri/Cargo.toml` erhöhen (einzige Stelle für die Version).
-2. Committen, dann Tag setzen und pushen:
+1. Version in `tauri-app/src-tauri/Cargo.toml` erhöhen. Das ist die einzige Stelle für die Version: `tauri.conf.json` enthält keine Version, und die App zeigt die Version aus `Cargo.toml` unter dem Titel und im Dialog **Über** an.
+2. Committen, dann Tag setzen und pushen. Der Tag muss zur Version passen (`v` + Version aus `Cargo.toml`):
    ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
+   git tag v0.3.0
+   git push origin v0.3.0
    ```
 3. GitHub Actions (`.github/workflows/release.yml`) baut alle Installer und legt einen **Release-Entwurf** an. Prüfen und unter *Releases* veröffentlichen.
+
+Hinweise:
+- Nur numerische Versionen verwenden (`0.3.0`, nicht `0.3.0-beta.1`). Der Windows-MSI-Installer (WiX) akzeptiert keine Pre-release-Suffixe, der Build scheitert sonst.
+- Testversionen stattdessen normal taggen und den Release auf GitHub als *Pre-release* markieren.
+- *Re-run* eines Actions-Laufs baut den alten Commit. Nach Änderungen einen neuen Tag setzen oder *Run workflow* nutzen.
 
 Nur bauen ohne Release: *Actions* > *Release* > *Run workflow*. Die Installer liegen dann als Artefakte am Lauf.
 
@@ -170,7 +193,11 @@ sudo install -m 755 convert_to_mp3_Lame.sh /usr/local/bin/convert_to_mp3_Lame.sh
 ## Projektstruktur (Ausschnitt)
 ```
 tauri-app/                     # Tauri GUI (Rust + HTML/JS)
+  src-tauri/                   # Rust-Teil, Version in Cargo.toml
   src-tauri/ci/                # Zusatz-Config für CI (ffmpeg/lame bündeln)
+  ui/                          # Oberfläche (index.html, app.js, style.css)
+  ui/i18n/                     # Sprachdateien (de.json, en.json)
+  ui/assets/flags/             # Flaggen für die Sprachauswahl
 scripts/dev/                   # Dev-Starter (Windows/Linux/macOS)
 scripts/ci/                    # Hilfsskripte für GitHub Actions
 .github/workflows/release.yml  # Installer bauen und Release anlegen
@@ -181,3 +208,5 @@ convert_to_mp3_Lame.sh         # Bash-Variante
 GNU General Public License v3.0 (GPL-3.0). Siehe `LICENSE`.
 
 Mitgelieferte Programme: ffmpeg (GPL, https://ffmpeg.org) und LAME (LGPL, https://lame.sourceforge.io). Die Quellen sind auf den jeweiligen Projektseiten verfügbar.
+
+Flaggen-Icons: [flag-icons](https://github.com/lipis/flag-icons) (MIT), siehe `THIRD_PARTY_LICENSES.md`.

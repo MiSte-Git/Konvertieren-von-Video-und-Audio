@@ -5,6 +5,170 @@ const invoke =
   window.__TAURI__?.tauri?.invoke ||
   window.__TAURI_INTERNALS__?.invoke;
 
+// ---------------------------------------------------------------------------
+// Mehrsprachigkeit (i18n)
+// Texte liegen in ui/i18n/<code>.json. Statische Texte im HTML tragen
+// data-i18n (Text), data-i18n-title, data-i18n-placeholder bzw.
+// data-i18n-aria-label. Fehler aus Rust kommen als JSON-Code
+// {"code": "...", "params": {...}} und werden ueber errors.<code> uebersetzt.
+// Neue Sprache: JSON anlegen, Flagge nach assets/flags/<code>.png (+ @2x)
+// und Eintrag in LANGUAGES ergaenzen.
+// ---------------------------------------------------------------------------
+const LANGUAGES = [
+  { code: "de", name: "Deutsch" },
+  { code: "en", name: "English" },
+];
+const FALLBACK_LANGUAGE = "en";
+const LANGUAGE_STORAGE_KEY = "konvertierung.language";
+const dictionaries = {};
+let currentLanguage = "de";
+let statusRenderer = null;
+
+function storageGet(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function storageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ohne Speicher gilt die Auswahl nur bis zum Neustart.
+  }
+}
+
+function isSupportedLanguage(code) {
+  return LANGUAGES.some((lang) => lang.code === code);
+}
+
+function detectSystemLanguage() {
+  const candidates = navigator.languages?.length ? navigator.languages : [navigator.language];
+  for (const candidate of candidates) {
+    const base = String(candidate || "").toLowerCase().split(/[-_]/)[0];
+    if (isSupportedLanguage(base)) return base;
+  }
+  return FALLBACK_LANGUAGE;
+}
+
+function initialLanguage() {
+  const saved = storageGet(LANGUAGE_STORAGE_KEY);
+  return isSupportedLanguage(saved) ? saved : detectSystemLanguage();
+}
+
+async function loadDictionary(code) {
+  if (dictionaries[code]) return dictionaries[code];
+  try {
+    const response = await fetch(`i18n/${code}.json`, { cache: "no-store" });
+    if (!response.ok) throw new Error(String(response.status));
+    dictionaries[code] = await response.json();
+  } catch (err) {
+    console.error(`i18n: ${code}.json konnte nicht geladen werden`, err);
+    dictionaries[code] = {};
+  }
+  return dictionaries[code];
+}
+
+function lookup(dict, key) {
+  return key.split(".").reduce((node, part) => (node && typeof node === "object" ? node[part] : undefined), dict);
+}
+
+function interpolate(text, params = {}) {
+  return text.replace(/\{(\w+)\}/g, (match, name) => (name in params ? String(params[name]) : match));
+}
+
+function t(key, params = {}) {
+  // Vor dem Laden der Woerterbuecher nichts anzeigen statt roher Schluessel.
+  if (!dictionaries.de) return "";
+  let text = lookup(dictionaries[currentLanguage], key);
+  if (typeof text !== "string") text = lookup(dictionaries.de, key);
+  if (typeof text !== "string") return key;
+  return interpolate(text, params);
+}
+
+function translateError(err) {
+  const raw = typeof err === "string" ? err : err?.message || String(err);
+  let parsed = null;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return raw;
+  }
+  if (!parsed || typeof parsed.code !== "string") return raw;
+  const params = parsed.params || {};
+  const key = `errors.${parsed.code}`;
+  let text = t(key, params);
+  if (text === key) text = parsed.code;
+  const template = lookup(dictionaries[currentLanguage], key) || lookup(dictionaries.de, key) || "";
+  if (params.detail && !template.includes("{detail}")) {
+    text = `${text}: ${params.detail}`;
+  }
+  return text;
+}
+
+function applyTranslations(root = document) {
+  for (const el of root.querySelectorAll("[data-i18n]")) {
+    el.textContent = t(el.dataset.i18n);
+  }
+  for (const el of root.querySelectorAll("[data-i18n-title]")) {
+    el.title = t(el.dataset.i18nTitle);
+  }
+  for (const el of root.querySelectorAll("[data-i18n-placeholder]")) {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  }
+  for (const el of root.querySelectorAll("[data-i18n-aria-label]")) {
+    el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
+  }
+}
+
+function renderLanguageBar() {
+  const bar = document.getElementById("langBar");
+  if (!bar) return;
+  bar.replaceChildren();
+  for (const lang of LANGUAGES) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "lang-btn";
+    btn.dataset.lang = lang.code;
+    btn.title = lang.name;
+    const img = document.createElement("img");
+    img.src = `assets/flags/${lang.code}.png`;
+    img.srcset = `assets/flags/${lang.code}.png 1x, assets/flags/${lang.code}@2x.png 2x`;
+    img.alt = lang.name;
+    img.width = 22;
+    img.height = 16;
+    // Fallback auf Sprachcode, falls die Flagge fehlt.
+    img.addEventListener("error", () => {
+      img.remove();
+      btn.textContent = lang.code.toUpperCase();
+    });
+    btn.append(img);
+    btn.addEventListener("click", () => setLanguage(lang.code));
+    bar.append(btn);
+  }
+}
+
+function updateLanguageBar() {
+  for (const btn of document.querySelectorAll(".lang-btn")) {
+    const active = btn.dataset.lang === currentLanguage;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+  }
+}
+
+async function setLanguage(code, { persist = true } = {}) {
+  if (!isSupportedLanguage(code)) code = FALLBACK_LANGUAGE;
+  await Promise.all([loadDictionary("de"), loadDictionary(code)]);
+  currentLanguage = code;
+  document.documentElement.lang = code;
+  if (persist) storageSet(LANGUAGE_STORAGE_KEY, code);
+  applyTranslations();
+  updateLanguageBar();
+  refreshDynamicTexts();
+}
+
 const inputPath = document.getElementById("inputPath");
 const outputPath = document.getElementById("outputPath");
 const audioOptionsSection = document.getElementById("audioOptionsSection");
@@ -38,12 +202,6 @@ let cancelRequested = false;
 let currentBatchIndex = 0;
 let currentBatchTotal = 0;
 const AUDIO_ADJUSTMENT_STORAGE_KEY = "konvertierung.audioAdjustment";
-const AUDIO_ADJUSTMENT_HELP = {
-  none: "Die Lautstärke wird nicht verändert.",
-  normalize: "Passt die Gesamtlautheit der Datei an.",
-  speech: "Gleicht unterschiedliche Sprecherlautstärken aus und begrenzt Lautstärkespitzen.",
-  strong: "Für Aufnahmen mit sehr leisen Stimmen und plötzlich sehr lauten Passagen.",
-};
 
 function formatHms(totalSeconds) {
   if (!Number.isFinite(totalSeconds)) return "";
@@ -97,12 +255,24 @@ function isBatchModeActive() {
 }
 
 function setStatus(text) {
+  statusRenderer = null;
   statusEl.textContent = text;
+}
+
+// Status ueber Uebersetzungsschluessel setzen; wird beim Sprachwechsel neu gerendert.
+function setStatusT(key, params = {}) {
+  statusRenderer = () => t(key, params);
+  statusEl.textContent = statusRenderer();
+}
+
+function setStatusError(err) {
+  statusRenderer = () => t("status.error", { message: translateError(err) });
+  statusEl.textContent = statusRenderer();
 }
 
 function batchStatusSuffix() {
   if (currentBatchTotal > 1 && currentBatchIndex > 0) {
-    return ` Datei ${currentBatchIndex}/${currentBatchTotal}`;
+    return t("status.batchSuffix", { index: currentBatchIndex, total: currentBatchTotal });
   }
   return "";
 }
@@ -168,7 +338,7 @@ function defaultOutput(input, mode, clipMode) {
 function setInputSelection(paths) {
   selectedInputs = Array.isArray(paths) ? paths.filter(Boolean) : [];
   if (selectedInputs.length > 1) {
-    inputPath.value = `${selectedInputs.length} Dateien ausgewählt`;
+    inputPath.value = t("files.selectedCount", { count: selectedInputs.length });
     inputPath.title = selectedInputs.join("\n");
     renderJoinOrder();
     return;
@@ -194,13 +364,13 @@ function renderJoinOrder() {
     const up = document.createElement("button");
     up.type = "button";
     up.textContent = "↑";
-    up.title = "Nach oben";
+    up.title = t("join.up");
     up.disabled = index === 0;
     up.addEventListener("click", () => moveJoinInput(index, index - 1));
     const down = document.createElement("button");
     down.type = "button";
     down.textContent = "↓";
-    down.title = "Nach unten";
+    down.title = t("join.down");
     down.disabled = index === selectedInputs.length - 1;
     down.addEventListener("click", () => moveJoinInput(index, index + 1));
     row.append(name, up, down);
@@ -229,9 +399,7 @@ function updateOutputControls() {
   const disableOutput = isBatchModeActive();
   outputPath.disabled = disableOutput;
   browseOutputBtn.disabled = disableOutput;
-  outputPath.placeholder = disableOutput
-    ? "Wird pro Datei automatisch erzeugt"
-    : "Zieldatei (optional)";
+  outputPath.placeholder = disableOutput ? t("files.targetAuto") : t("files.targetPlaceholder");
   if (disableOutput) {
     outputPath.value = "";
     lastAutoOutput = "";
@@ -265,7 +433,7 @@ function updateVideoOptionsVisibility() {
 
 function updateAudioAdjustmentHelp() {
   if (!audioAdjustmentHelp) return;
-  audioAdjustmentHelp.textContent = AUDIO_ADJUSTMENT_HELP[getAudioAdjustment()] || AUDIO_ADJUSTMENT_HELP.none;
+  audioAdjustmentHelp.textContent = t(`audio.help.${getAudioAdjustment()}`);
 }
 
 function loadAudioAdjustment() {
@@ -316,13 +484,13 @@ function updateProgressUI(values) {
   if (time) parts.push(`time=${time}`);
   if (bitrate) parts.push(`bitrate=${bitrate}`);
   if (speed) parts.push(`speed=${speed}`);
-  const text = parts.length ? parts.join(" ") : "Bitte warten ...";
+  const text = parts.length ? parts.join(" ") : t("status.wait");
   if (document.body.classList.contains("is-running")) {
     if (Number.isFinite(totalDurationSec) && Number.isFinite(elapsed)) {
       const total = formatHms(totalDurationSec);
       const done = formatHms(elapsed);
       const remaining = formatHms(Math.max(0, totalDurationSec - elapsed));
-      setStatus(`${done} / ${total} (rest ${remaining})${batchStatusSuffix()}`);
+      setStatus(`${t("status.progress", { done, total, remaining })}${batchStatusSuffix()}`);
     } else {
       setStatus(`${text}${batchStatusSuffix()}`);
     }
@@ -364,7 +532,7 @@ async function pickInput() {
   const mode = getMode();
   const selected = await dialogOpen({
     multiple: supportsBatchMode(mode),
-    filters: [{ name: "Video/Audio", extensions: ["mp4", "m4a", "avi", "mkv", "mov", "mp3", "wav"] }],
+    filters: [{ name: t("files.filterName"), extensions: ["mp4", "m4a", "avi", "mkv", "mov", "mp3", "wav"] }],
   });
   if (!selected) return;
   const paths = Array.isArray(selected) ? selected : [selected];
@@ -372,9 +540,7 @@ async function pickInput() {
   updateOutputControls();
 
   if (paths.length > 1 && supportsBatchMode(mode)) {
-    setStatus(mode === "join"
-      ? `${paths.length} Videos ausgewählt. Reihenfolge kann unten geändert werden.`
-      : `${paths.length} Dateien ausgewählt. Ausgabe erfolgt je Datei neben der Quelle.`);
+    setStatusT(mode === "join" ? "status.selectedJoin" : "status.selectedBatch", { count: paths.length });
     return;
   }
 
@@ -406,7 +572,7 @@ async function start() {
   currentBatchTotal = 0;
 
   if (!inputs.length) {
-    setStatus(supportsBatchMode(mode) ? "Bitte mindestens eine Quelldatei wählen." : "Bitte eine Quelldatei wählen.");
+    setStatusT(supportsBatchMode(mode) ? "status.needInputs" : "status.needInput");
     return;
   }
 
@@ -423,13 +589,13 @@ async function start() {
   const requestedSizeMb = Number(targetSizeMb?.value || 100);
   if ((mode === "targetsize" || (mode === "join" && compressAfterJoin?.checked)) &&
       (!Number.isFinite(requestedSizeMb) || requestedSizeMb < 1)) {
-    setStatus("Bitte eine Zielgröße von mindestens 1 MB eingeben.");
+    setStatusT("status.needTargetSize");
     return;
   }
 
   if (mode === "join") {
     if (inputs.length < 2) {
-      setStatus("Bitte mindestens zwei Videos auswählen.");
+      setStatusT("status.needTwoVideos");
       return;
     }
     const startedAt = Date.now();
@@ -443,7 +609,7 @@ async function start() {
     } catch {
       totalDurationSec = null;
     }
-    setStatus(compressAfterJoin.checked ? "Videos zusammenfügen und komprimieren ..." : "Videos zusammenfügen ...");
+    setStatusT(compressAfterJoin.checked ? "status.joinCompress" : "status.join");
     startProgressPolling();
     try {
       await invoke("join_videos", {
@@ -452,9 +618,10 @@ async function start() {
         compress: compressAfterJoin.checked,
         targetSizeMb: requestedSizeMb,
       });
-      setStatus(`Fertig in ${formatElapsedMs(Date.now() - startedAt)}.`);
+      setStatusT("status.done", { elapsed: formatElapsedMs(Date.now() - startedAt) });
     } catch (err) {
-      setStatus(cancelRequested ? "Abgebrochen." : `Fehler: ${err}`);
+      if (cancelRequested) setStatusT("status.cancelled");
+      else setStatusError(err);
     } finally {
       startBtn.disabled = false;
       cancelBtn.disabled = true;
@@ -471,12 +638,13 @@ async function start() {
     cancelBtn.disabled = false;
     try {
       totalDurationSec = await invoke("get_media_duration", { input });
-      setStatus(`Video auf maximal ${requestedSizeMb} MB komprimieren ...`);
+      setStatusT("status.compress", { mb: requestedSizeMb });
       startProgressPolling();
       await invoke("compress_to_size", { input, output, targetSizeMb: requestedSizeMb });
-      setStatus(`Fertig in ${formatElapsedMs(Date.now() - startedAt)}.`);
+      setStatusT("status.done", { elapsed: formatElapsedMs(Date.now() - startedAt) });
     } catch (err) {
-      setStatus(cancelRequested ? "Abgebrochen." : `Fehler: ${err}`);
+      if (cancelRequested) setStatusT("status.cancelled");
+      else setStatusError(err);
     } finally {
       startBtn.disabled = false;
       cancelBtn.disabled = true;
@@ -491,11 +659,11 @@ async function start() {
     const start = clipStart.value.trim();
     const end = clipEnd.value.trim();
     if (!start || !end || !isTime(start) || !isTime(end)) {
-      setStatus("Bitte Start/Ende im Format HH:MM:SS eingeben.");
+      setStatusT("status.needClipTimes");
       return;
     }
     const clipMode = getClipMode();
-    setStatus(clipMode === "minus" ? "Ausschnitt entfernen ..." : "Ausschnitt schneiden ...");
+    setStatusT(clipMode === "minus" ? "status.clipRemove" : "status.clipCut");
     setRunning(true);
     startProgressPolling();
     startBtn.disabled = true;
@@ -507,9 +675,10 @@ async function start() {
         await invoke("clip_media", { input, output, start, end });
       }
       const elapsed = formatElapsedMs(Date.now() - startedAt);
-      setStatus(`Fertig in ${elapsed}.`);
+      setStatusT("status.done", { elapsed });
     } catch (err) {
-      setStatus(cancelRequested ? "Abgebrochen." : `Fehler: ${err}`);
+      if (cancelRequested) setStatusT("status.cancelled");
+      else setStatusError(err);
     } finally {
       startBtn.disabled = false;
       cancelBtn.disabled = true;
@@ -540,7 +709,7 @@ async function start() {
         }
         if (cancelRequested) break;
 
-        setStatus(`Datei ${currentBatchIndex}/${currentBatchTotal}`);
+        setStatusT("status.batchFile", { index: currentBatchIndex, total: currentBatchTotal });
         startProgressPolling();
         await invoke("convert_media", {
           mode,
@@ -551,10 +720,10 @@ async function start() {
       }
 
       if (cancelRequested) {
-        setStatus("Abgebrochen.");
+        setStatusT("status.cancelled");
       } else {
         const elapsed = formatElapsedMs(Date.now() - startedAt);
-        setStatus(`${inputs.length} Dateien fertig in ${elapsed}.`);
+        setStatusT("status.batchDone", { count: inputs.length, elapsed });
       }
       return;
     }
@@ -567,18 +736,19 @@ async function start() {
       totalDurationSec = null;
     }
     if (cancelRequested) {
-      setStatus("Abgebrochen.");
+      setStatusT("status.cancelled");
       return;
     }
 
-    setStatus("Konvertierung läuft ...");
+    setStatusT("status.converting");
     startProgressPolling();
     const startedAt = Date.now();
     await invoke("convert_media", { mode, input, output, audioAdjustment: getAudioAdjustment() });
     const elapsed = formatElapsedMs(Date.now() - startedAt);
-    setStatus(`Fertig in ${elapsed}.`);
+    setStatusT("status.done", { elapsed });
   } catch (err) {
-    setStatus(cancelRequested ? "Abgebrochen." : `Fehler: ${err}`);
+    if (cancelRequested) setStatusT("status.cancelled");
+    else setStatusError(err);
   } finally {
     startBtn.disabled = false;
     cancelBtn.disabled = true;
@@ -660,28 +830,29 @@ listenEvent("ffmpeg_progress", (event) => {
   updateProgressUI(payload);
 });
 listenEvent("lame_warning", async (event) => {
-  const message = event?.payload || "LAME-Prüfung fehlgeschlagen.";
+  const message = event?.payload ? translateError(event.payload) : t("dialog.lameFailed");
   if (dialog?.message) {
-    await dialog.message(message, { title: "LAME-Prüfung", type: "warning" });
+    await dialog.message(message, { title: t("dialog.lameTitle"), type: "warning" });
     return;
   }
   if (dialog?.alert) {
     await dialog.alert(message);
     return;
   }
-  setStatus(`Warnung: ${message}`);
+  setStatusT("status.warning", { message });
 });
 startBtn.addEventListener("click", start);
 cancelBtn.addEventListener("click", async () => {
   if (!invoke) return;
   cancelRequested = true;
   cancelBtn.disabled = true;
-  setStatus("Abbruch wird angefordert ...");
+  setStatusT("status.cancelRequested");
   try {
     await invoke("cancel_current");
-    setStatus("Abbruch wird ausgeführt ...");
+    setStatusT("status.cancelRunning");
   } catch (err) {
-    setStatus(cancelRequested ? "Abbruch vorgemerkt ..." : `Fehler: ${err}`);
+    if (cancelRequested) setStatusT("status.cancelQueued");
+    else setStatusError(err);
   }
 });
 
@@ -693,12 +864,12 @@ logBtn.addEventListener("click", async () => {
       await navigator.clipboard.writeText(logPath);
     }
     if (dialog?.message) {
-      await dialog.message(`Logfile: ${logPath}\n(Pfad wurde kopiert.)`, { title: "Log-Pfad", type: "info" });
+      await dialog.message(t("status.logFileCopied", { path: logPath }), { title: t("dialog.logTitle"), type: "info" });
       return;
     }
-    setStatus(`Logfile: ${logPath}`);
+    setStatusT("status.logFile", { path: logPath });
   } catch (err) {
-    setStatus(`Fehler: ${err}`);
+    setStatusError(err);
   }
 });
 
@@ -708,30 +879,52 @@ const aboutDialog = document.getElementById("aboutDialog");
 const aboutVersionEl = document.getElementById("aboutVersion");
 const aboutTauriEl = document.getElementById("aboutTauri");
 
+let appVersion = null;
+let versionLoaded = false;
+
+function renderVersion() {
+  if (!versionLoaded) return;
+  const text = appVersion ? t("app.version", { version: appVersion }) : t("app.versionUnknown");
+  appVersionEl.textContent = text;
+  aboutVersionEl.textContent = text;
+}
+
 async function loadVersionInfo() {
-  if (!invoke) {
-    appVersionEl.textContent = "Version unbekannt";
-    aboutVersionEl.textContent = "Version unbekannt";
-    return;
+  if (invoke) {
+    try {
+      appVersion = await invoke("plugin:app|version");
+    } catch {
+      appVersion = null;
+    }
+    try {
+      const tauriVersion = await invoke("plugin:app|tauri_version");
+      aboutTauriEl.textContent = `Tauri ${tauriVersion}`;
+    } catch {
+      /* optional */
+    }
   }
-  try {
-    const version = await invoke("plugin:app|version");
-    appVersionEl.textContent = `Version ${version}`;
-    aboutVersionEl.textContent = `Version ${version}`;
-  } catch (err) {
-    appVersionEl.textContent = "Version unbekannt";
-    aboutVersionEl.textContent = "Version unbekannt";
+  versionLoaded = true;
+  renderVersion();
+}
+
+// Texte, die per JS gesetzt werden, beim Sprachwechsel neu aufbauen.
+function refreshDynamicTexts() {
+  if (statusRenderer) statusEl.textContent = statusRenderer();
+  updateAudioAdjustmentHelp();
+  updateOutputControls();
+  if (selectedInputs.length > 1) {
+    inputPath.value = t("files.selectedCount", { count: selectedInputs.length });
   }
-  try {
-    const tauriVersion = await invoke("plugin:app|tauri_version");
-    aboutTauriEl.textContent = `Tauri ${tauriVersion}`;
-  } catch (err) {
-    /* optional */
-  }
+  renderJoinOrder();
+  if (appVersionEl) renderVersion();
 }
 
 aboutBtn?.addEventListener("click", () => {
   if (aboutDialog?.showModal) aboutDialog.showModal();
 });
 
-loadVersionInfo();
+renderLanguageBar();
+setLanguage(initialLanguage(), { persist: false }).then(() => {
+  if (!document.body.classList.contains("is-running")) setStatusT("status.ready");
+  loadVersionInfo();
+});

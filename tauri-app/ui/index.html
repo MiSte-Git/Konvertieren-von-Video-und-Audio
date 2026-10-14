@@ -7,113 +7,115 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>Konvertierung Audio-Video</title>
-    <link rel="stylesheet" href="style.css?v=7" />
+    <link rel="stylesheet" href="style.css?v=8" />
   </head>
   <body>
     <div class="app">
+      <div id="langBar" class="lang-bar" role="group" aria-label="Sprache" data-i18n-aria-label="lang.label"></div>
+
       <header class="app-header">
         <div>
           <h1>Konvertierung Audio-Video</h1>
           <p><span id="appVersion" class="version">Version …</span></p>
         </div>
-        <button id="aboutBtn" class="secondary" type="button">Über</button>
+        <button id="aboutBtn" class="secondary" type="button" data-i18n="app.about">Über</button>
       </header>
 
       <section class="card">
-        <h2>Modus</h2>
+        <h2 data-i18n="mode.title">Modus</h2>
         <div class="grid modes">
-          <label><input type="radio" name="mode" value="v2mp3" checked /> Video zu MP3</label>
-          <label><input type="radio" name="mode" value="a2mp3" /> Audio zu MP3</label>
-          <label><input type="radio" name="mode" value="adjustvideoaudio" /> Audiospur im Video anpassen</label>
-          <label><input type="radio" name="mode" value="divx" /> Video zu AVI (DivX)</label>
-          <label><input type="radio" name="mode" value="clip" /> Video-Ausschnitt</label>
-          <label><input type="radio" name="mode" value="targetsize" /> Video auf Zielgröße komprimieren</label>
-          <label><input type="radio" name="mode" value="join" /> Videos zusammenfügen</label>
+          <label><input type="radio" name="mode" value="v2mp3" checked /> <span data-i18n="mode.v2mp3">Video zu MP3</span></label>
+          <label><input type="radio" name="mode" value="a2mp3" /> <span data-i18n="mode.a2mp3">Audio zu MP3</span></label>
+          <label><input type="radio" name="mode" value="adjustvideoaudio" /> <span data-i18n="mode.adjustvideoaudio">Audiospur im Video anpassen</span></label>
+          <label><input type="radio" name="mode" value="divx" /> <span data-i18n="mode.divx">Video zu AVI (DivX)</span></label>
+          <label><input type="radio" name="mode" value="clip" /> <span data-i18n="mode.clip">Video-Ausschnitt</span></label>
+          <label><input type="radio" name="mode" value="targetsize" /> <span data-i18n="mode.targetsize">Video auf Zielgröße komprimieren</span></label>
+          <label><input type="radio" name="mode" value="join" /> <span data-i18n="mode.join">Videos zusammenfügen</span></label>
         </div>
       </section>
 
       <section id="audioOptionsSection" class="card">
-        <h2>Audio-Ausgabeoptionen</h2>
+        <h2 data-i18n="audio.title">Audio-Ausgabeoptionen</h2>
         <div class="row">
-          <label for="audioAdjustment">Lautstärkeanpassung</label>
+          <label for="audioAdjustment" data-i18n="audio.adjustment">Lautstärkeanpassung</label>
           <select id="audioAdjustment">
-            <option value="none" title="Die Lautstärke wird nicht verändert.">Keine</option>
-            <option value="normalize" title="Passt die Gesamtlautheit der Datei an.">Normalisieren</option>
-            <option value="speech" title="Gleicht unterschiedliche Sprecherlautstärken aus und begrenzt Lautstärkespitzen.">Sprache ausgleichen</option>
-            <option value="strong" title="Für Aufnahmen mit sehr leisen Stimmen und plötzlich sehr lauten Passagen.">Starke Unterschiede ausgleichen</option>
+            <option value="none" title="Die Lautstärke wird nicht verändert." data-i18n="audio.option.none" data-i18n-title="audio.help.none">Keine</option>
+            <option value="normalize" title="Passt die Gesamtlautheit der Datei an." data-i18n="audio.option.normalize" data-i18n-title="audio.help.normalize">Normalisieren</option>
+            <option value="speech" title="Gleicht unterschiedliche Sprecherlautstärken aus und begrenzt Lautstärkespitzen." data-i18n="audio.option.speech" data-i18n-title="audio.help.speech">Sprache ausgleichen</option>
+            <option value="strong" title="Für Aufnahmen mit sehr leisen Stimmen und plötzlich sehr lauten Passagen." data-i18n="audio.option.strong" data-i18n-title="audio.help.strong">Starke Unterschiede ausgleichen</option>
           </select>
           <span id="audioAdjustmentHelp" class="field-help">Die Lautstärke wird nicht verändert.</span>
         </div>
       </section>
 
       <section id="joinOrderSection" class="card hidden">
-        <h2>Reihenfolge</h2>
-        <p class="field-help">Die Videos werden von oben nach unten zusammengefügt. Mit den Pfeilen lässt sich die Reihenfolge ändern.</p>
+        <h2 data-i18n="join.title">Reihenfolge</h2>
+        <p class="field-help" data-i18n="join.help">Die Videos werden von oben nach unten zusammengefügt. Mit den Pfeilen lässt sich die Reihenfolge ändern.</p>
         <ol id="joinOrderList" class="file-order"></ol>
       </section>
 
       <section id="targetSizeSection" class="card hidden">
-        <h2>Zielgröße</h2>
+        <h2 data-i18n="target.title">Zielgröße</h2>
         <div class="row">
-          <label for="targetSizeMb">Maximale Größe</label>
+          <label for="targetSizeMb" data-i18n="target.maxSize">Maximale Größe</label>
           <input id="targetSizeMb" type="number" min="1" step="1" value="100" />
           <span>MB</span>
         </div>
         <label id="joinCompressOption" class="hidden">
           <input id="compressAfterJoin" type="checkbox" />
-          Nach dem Zusammenfügen auf diese Zielgröße komprimieren
+          <span data-i18n="join.compressAfter">Nach dem Zusammenfügen auf diese Zielgröße komprimieren</span>
         </label>
-        <p id="joinCopyHint" class="field-help hidden">Ohne Komprimierung werden die Streams unverändert kopiert. Die Videos müssen dafür kompatible Bild-, Ton- und Formateinstellungen haben.</p>
+        <p id="joinCopyHint" class="field-help hidden" data-i18n="join.copyHint">Ohne Komprimierung werden die Streams unverändert kopiert. Die Videos müssen dafür kompatible Bild-, Ton- und Formateinstellungen haben.</p>
       </section>
 
       <section class="card">
-        <h2>Dateien</h2>
+        <h2 data-i18n="files.title">Dateien</h2>
         <div class="row">
-          <label>Quelle</label>
-          <input id="inputPath" type="text" placeholder="Quelldatei wählen" />
-          <button id="browseInput">Quelle wählen</button>
+          <label data-i18n="files.source">Quelle</label>
+          <input id="inputPath" type="text" placeholder="Quelldatei wählen" data-i18n-placeholder="files.sourcePlaceholder" />
+          <button id="browseInput" data-i18n="files.browseSource">Quelle wählen</button>
         </div>
         <div class="row">
-          <label>Ziel</label>
+          <label data-i18n="files.target">Ziel</label>
           <input id="outputPath" type="text" placeholder="Zieldatei (optional)" />
-          <button id="browseOutput">Ziel wählen</button>
+          <button id="browseOutput" data-i18n="files.browseTarget">Ziel wählen</button>
         </div>
       </section>
 
       <section id="clipSection" class="card hidden">
-        <h2>Ausschnitt</h2>
+        <h2 data-i18n="clip.title">Ausschnitt</h2>
         <div class="row">
-          <label>Start (HH:MM:SS)</label>
+          <label data-i18n="clip.start">Start (HH:MM:SS)</label>
           <input id="clipStart" type="text" placeholder="01:39:59" />
         </div>
         <div class="row">
-          <label>Ende (HH:MM:SS)</label>
+          <label data-i18n="clip.end">Ende (HH:MM:SS)</label>
           <input id="clipEnd" type="text" placeholder="02:03:07" />
         </div>
         <div class="grid modes">
           <label class="with-info">
             <input type="radio" name="clipMode" value="only" checked />
-            Nur Ausschnitt speichern
+            <span data-i18n="clip.only">Nur Ausschnitt speichern</span>
             <span class="info-icon" aria-label="Info">
               i
-              <span class="tooltip">Original bleibt unverändert.</span>
+              <span class="tooltip" data-i18n="clip.onlyInfo">Original bleibt unverändert.</span>
             </span>
           </label>
           <label class="with-info">
             <input type="radio" name="clipMode" value="minus" />
-            Ausschnitt entfernen
+            <span data-i18n="clip.minus">Ausschnitt entfernen</span>
             <span class="info-icon" aria-label="Info">
               i
-              <span class="tooltip">Original bleibt erhalten und es wird eine Kopie vom Original erstellt, in der der angegebene Ausschnitt entfernt wurde.</span>
+              <span class="tooltip" data-i18n="clip.minusInfo">Original bleibt erhalten und es wird eine Kopie vom Original erstellt, in der der angegebene Ausschnitt entfernt wurde.</span>
             </span>
           </label>
         </div>
       </section>
 
       <section class="card actions">
-        <button id="startBtn" class="primary">Start</button>
-        <button id="cancelBtn" class="secondary" disabled>Abbrechen</button>
-        <button id="logBtn" class="secondary" type="button">Log-Pfad</button>
+        <button id="startBtn" class="primary" data-i18n="actions.start">Start</button>
+        <button id="cancelBtn" class="secondary" disabled data-i18n="actions.cancel">Abbrechen</button>
+        <button id="logBtn" class="secondary" type="button" data-i18n="actions.logPath">Log-Pfad</button>
         <div id="progress" class="progress" aria-live="polite">
           <span class="spinner" aria-hidden="true"></span>
           <span class="progress-bar" aria-hidden="true"></span>
@@ -126,19 +128,19 @@
       <img src="icon.png" alt="" class="about-icon" onerror="this.remove()" />
       <h2>Konvertierung Audio-Video</h2>
       <p class="about-version" id="aboutVersion">Version …</p>
-      <p>Konvertiert, schneidet, komprimiert und fügt Audio- und Videodateien zusammen.</p>
+      <p data-i18n="about.description">Konvertiert, schneidet, komprimiert und fügt Audio- und Videodateien zusammen.</p>
       <dl class="about-meta">
-        <dt>Autor</dt><dd>Michael Stegmann</dd>
-        <dt>Lizenz</dt><dd>GNU GPL v3</dd>
-        <dt>Quellcode</dt><dd>github.com/MiSte-Git/Konvertieren-von-Video-und-Audio</dd>
-        <dt>Basis</dt><dd id="aboutTauri">Tauri</dd>
-        <dt>Verwendet</dt><dd>FFmpeg (ffmpeg.org), LAME (lame.sourceforge.io)</dd>
+        <dt data-i18n="about.author">Autor</dt><dd>Michael Stegmann</dd>
+        <dt data-i18n="about.license">Lizenz</dt><dd>GNU GPL v3</dd>
+        <dt data-i18n="about.source">Quellcode</dt><dd>github.com/MiSte-Git/Konvertieren-von-Video-und-Audio</dd>
+        <dt data-i18n="about.base">Basis</dt><dd id="aboutTauri">Tauri</dd>
+        <dt data-i18n="about.uses">Verwendet</dt><dd>FFmpeg (ffmpeg.org), LAME (lame.sourceforge.io)</dd>
       </dl>
       <form method="dialog" class="about-actions">
-        <button class="primary" type="submit">Schließen</button>
+        <button class="primary" type="submit" data-i18n="about.close">Schließen</button>
       </form>
     </dialog>
 
-    <script src="app.js?v=8"></script>
+    <script src="app.js?v=9"></script>
   </body>
 </html>
