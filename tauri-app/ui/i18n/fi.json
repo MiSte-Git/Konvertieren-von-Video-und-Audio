@@ -1,0 +1,160 @@
+{
+  "app": {
+    "about": "Tietoja",
+    "version": "Versio {version}",
+    "versionUnknown": "Versio tuntematon"
+  },
+  "lang": {
+    "label": "Kieli"
+  },
+  "mode": {
+    "title": "Tila",
+    "v2mp3": "Video MP3:ksi",
+    "a2mp3": "Ääni MP3:ksi",
+    "adjustvideoaudio": "Säädä videon ääniraitaa",
+    "divx": "Video AVI:ksi (DivX)",
+    "clip": "Videoleike",
+    "targetsize": "Pakkaa video tavoitekokoon",
+    "join": "Yhdistä videot"
+  },
+  "audio": {
+    "title": "Äänen tulostusasetukset",
+    "adjustment": "Äänenvoimakkuuden säätö",
+    "option": {
+      "none": "Ei mitään",
+      "normalize": "Normalisoi",
+      "speech": "Tasaa puhe",
+      "strong": "Tasaa suuret erot"
+    },
+    "help": {
+      "none": "Äänenvoimakkuutta ei muuteta.",
+      "normalize": "Säätää tiedoston kokonaisäänenvoimakkuutta.",
+      "speech": "Tasaa puhujien eri äänenvoimakkuudet ja rajoittaa huippuja.",
+      "strong": "Tallenteille, joissa on hyvin hiljaisia ääniä ja äkillisiä erittäin kovia kohtia."
+    }
+  },
+  "join": {
+    "title": "Järjestys",
+    "help": "Videot yhdistetään ylhäältä alas. Järjestystä voi muuttaa nuolilla.",
+    "up": "Ylös",
+    "down": "Alas",
+    "compressAfter": "Pakkaa yhdistämisen jälkeen tähän tavoitekokoon",
+    "copyHint": "Ilman pakkausta virrat kopioidaan muuttamattomina. Videoilla on oltava yhteensopivat kuva-, ääni- ja muotoasetukset."
+  },
+  "target": {
+    "title": "Tavoitekoko",
+    "maxSize": "Enimmäiskoko"
+  },
+  "files": {
+    "title": "Tiedostot",
+    "source": "Lähde",
+    "sourcePlaceholder": "Valitse lähdetiedosto",
+    "browseSource": "Valitse lähde",
+    "target": "Kohde",
+    "targetPlaceholder": "Kohdetiedosto (valinnainen)",
+    "targetAuto": "Luodaan automaattisesti jokaiselle tiedostolle",
+    "browseTarget": "Valitse kohde",
+    "selectedCount": "{count} tiedostoa valittu",
+    "filterName": "Video/Ääni"
+  },
+  "clip": {
+    "title": "Leike",
+    "start": "Alku (HH:MM:SS)",
+    "end": "Loppu (HH:MM:SS)",
+    "only": "Tallenna vain leike",
+    "onlyInfo": "Alkuperäinen pysyy ennallaan.",
+    "minus": "Poista leike",
+    "minusInfo": "Alkuperäinen säilyy, ja siitä luodaan kopio, josta annettu kohta on poistettu."
+  },
+  "actions": {
+    "start": "Aloita",
+    "cancel": "Peruuta",
+    "logPath": "Lokin polku"
+  },
+  "status": {
+    "ready": "Valmis.",
+    "wait": "Odota hetki ...",
+    "progress": "{done} / {total} (jäljellä {remaining})",
+    "batchFile": "Tiedosto {index}/{total}",
+    "batchSuffix": " Tiedosto {index}/{total}",
+    "selectedJoin": "{count} videota valittu. Järjestystä voi muuttaa alla.",
+    "selectedBatch": "{count} tiedostoa valittu. Jokainen tulos tallennetaan lähteen viereen.",
+    "needInputs": "Valitse vähintään yksi lähdetiedosto.",
+    "needInput": "Valitse lähdetiedosto.",
+    "needTargetSize": "Anna vähintään 1 Mt:n tavoitekoko.",
+    "needTwoVideos": "Valitse vähintään kaksi videota.",
+    "joinCompress": "Yhdistetään ja pakataan videoita ...",
+    "join": "Yhdistetään videoita ...",
+    "compress": "Pakataan video enintään {mb} Mt:iin ...",
+    "needClipTimes": "Anna alku ja loppu muodossa HH:MM:SS.",
+    "clipRemove": "Poistetaan leikettä ...",
+    "clipCut": "Leikataan leikettä ...",
+    "converting": "Muunnetaan ...",
+    "done": "Valmis ajassa {elapsed}.",
+    "batchDone": "{count} tiedostoa valmis ajassa {elapsed}.",
+    "cancelled": "Peruutettu.",
+    "error": "Virhe: {message}",
+    "warning": "Varoitus: {message}",
+    "cancelRequested": "Pyydetään peruutusta ...",
+    "cancelRunning": "Peruutetaan ...",
+    "cancelQueued": "Peruutus odottaa ...",
+    "logFile": "Lokitiedosto: {path}",
+    "logFileCopied": "Lokitiedosto: {path}\n(Polku kopioitu.)"
+  },
+  "dialog": {
+    "logTitle": "Lokin polku",
+    "lameTitle": "LAME-tarkistus",
+    "lameFailed": "LAME-tarkistus epäonnistui."
+  },
+  "about": {
+    "description": "Muuntaa, leikkaa, pakkaa ja yhdistää ääni- ja videotiedostoja.",
+    "author": "Tekijä",
+    "license": "Lisenssi",
+    "source": "Lähdekoodi",
+    "base": "Pohjana",
+    "uses": "Käyttää",
+    "close": "Sulje"
+  },
+  "errors": {
+    "log_path_unavailable": "Lokin polkua ei voitu määrittää.",
+    "output_dir_create": "Kohdekansiota ei voitu luoda",
+    "ffprobe_start": "ffprobea ei voitu käynnistää",
+    "ffprobe_duration_failed": "ffprobe ei pystynyt määrittämään kestoa.",
+    "ffprobe_tags_failed": "ffprobe ei pystynyt tarkistamaan MP3-kooderin tunnisteita.",
+    "duration_unreadable": "Kestoa ei voitu lukea.",
+    "duration_invalid": "Videon kesto on virheellinen.",
+    "duration_unknown": "Videon kestoa ei voitu määrittää.",
+    "unknown_audio_adjustment": "Tuntematon äänenvoimakkuuden säätö.",
+    "unknown_mode": "Tuntematon tila.",
+    "empty_command": "Tyhjä ffmpeg/lame-komento.",
+    "ffmpeg_start": "ffmpegiä ei voitu käynnistää",
+    "ffmpeg_read": "ffmpegin tulostetta ei voitu lukea",
+    "ffmpeg_stdout_unavailable": "ffmpegin tuloste ei ole käytettävissä.",
+    "ffmpeg_failed": "ffmpeg epäonnistui (paluukoodi {exit})",
+    "lame_start": "lamea ei voitu käynnistää",
+    "lame_failed": "lame epäonnistui (paluukoodi {exit})",
+    "lame_tag_missing": "MP3:a ei ole koodattu LAMEllä (LAME-kooderin tunnistetta ei löytynyt).",
+    "lame_version_mismatch": "MP3-kooderin tunniste ei sisällä asennettua LAME-versiota ({version}).",
+    "lock_error": "Sisäinen lukitusvirhe.",
+    "kill_failed": "Prosessia ei voitu lopettaa",
+    "no_running_process": "Ei käynnissä olevaa prosessia.",
+    "invalid_input": "Valitse kelvollinen syötetiedosto.",
+    "input_not_found": "Syötetiedostoa ei löytynyt: {path}",
+    "same_input_output": "Lähde ja kohde eivät saa olla samat.",
+    "target_size_min": "Tavoitekoon on oltava vähintään 1 Mt.",
+    "target_size_too_small": "Valittu tavoitekoko on liian pieni videon kestolle.",
+    "join_min_two": "Valitse vähintään kaksi videota.",
+    "join_output_overwrites_input": "Kohde ei saa korvata mitään lähdetiedostoa.",
+    "path_unreadable": "Polkua ei voitu lukea ({path})",
+    "temp_list_create": "Väliaikaista tiedostoluetteloa ei voitu luoda",
+    "time_format_invalid": "Virheellinen aikamuoto. Käytä muotoa HH:MM:SS.",
+    "task_failed": "Sisäinen käsittelyvirhe"
+  },
+  "suffix": {
+    "clip": "leike",
+    "clipRemoved": "ilman_leiketta",
+    "compressed": "pakattu",
+    "joined": "yhdistetty",
+    "audioAdjusted": "aani_saadetty"
+  }
+}

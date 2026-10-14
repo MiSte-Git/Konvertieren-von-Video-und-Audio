@@ -1,0 +1,160 @@
+{
+  "app": {
+    "about": "O programu",
+    "version": "Verzija {version}",
+    "versionUnknown": "Verzija nepoznata"
+  },
+  "lang": {
+    "label": "Jezik"
+  },
+  "mode": {
+    "title": "Način",
+    "v2mp3": "Video u MP3",
+    "a2mp3": "Audio u MP3",
+    "adjustvideoaudio": "Prilagodi audiozapis u videu",
+    "divx": "Video u AVI (DivX)",
+    "clip": "Isječak videa",
+    "targetsize": "Komprimiraj video na ciljnu veličinu",
+    "join": "Spoji videozapise"
+  },
+  "audio": {
+    "title": "Opcije audioizlaza",
+    "adjustment": "Prilagodba glasnoće",
+    "option": {
+      "none": "Bez",
+      "normalize": "Normaliziraj",
+      "speech": "Ujednači govor",
+      "strong": "Ujednači velike razlike"
+    },
+    "help": {
+      "none": "Glasnoća se ne mijenja.",
+      "normalize": "Prilagođava ukupnu glasnoću datoteke.",
+      "speech": "Ujednačuje različite glasnoće govornika i ograničava vršne razine.",
+      "strong": "Za snimke s vrlo tihim glasovima i iznenadnim vrlo glasnim dijelovima."
+    }
+  },
+  "join": {
+    "title": "Redoslijed",
+    "help": "Videozapisi se spajaju odozgo prema dolje. Strelicama se može promijeniti redoslijed.",
+    "up": "Gore",
+    "down": "Dolje",
+    "compressAfter": "Nakon spajanja komprimiraj na ovu veličinu",
+    "copyHint": "Bez kompresije tokovi se kopiraju nepromijenjeni. Videozapisi moraju imati kompatibilne postavke slike, zvuka i formata."
+  },
+  "target": {
+    "title": "Ciljna veličina",
+    "maxSize": "Najveća veličina"
+  },
+  "files": {
+    "title": "Datoteke",
+    "source": "Izvor",
+    "sourcePlaceholder": "Odaberi izvornu datoteku",
+    "browseSource": "Odaberi izvor",
+    "target": "Odredište",
+    "targetPlaceholder": "Odredišna datoteka (neobavezno)",
+    "targetAuto": "Stvara se automatski za svaku datoteku",
+    "browseTarget": "Odaberi odredište",
+    "selectedCount": "Odabrano datoteka: {count}",
+    "filterName": "Video/Audio"
+  },
+  "clip": {
+    "title": "Isječak",
+    "start": "Početak (HH:MM:SS)",
+    "end": "Kraj (HH:MM:SS)",
+    "only": "Spremi samo isječak",
+    "onlyInfo": "Izvornik ostaje nepromijenjen.",
+    "minus": "Ukloni isječak",
+    "minusInfo": "Izvornik se zadržava i stvara se kopija iz koje je uklonjen navedeni isječak."
+  },
+  "actions": {
+    "start": "Pokreni",
+    "cancel": "Odustani",
+    "logPath": "Putanja zapisnika"
+  },
+  "status": {
+    "ready": "Spremno.",
+    "wait": "Molimo pričekajte ...",
+    "progress": "{done} / {total} (preostalo {remaining})",
+    "batchFile": "Datoteka {index}/{total}",
+    "batchSuffix": " Datoteka {index}/{total}",
+    "selectedJoin": "Odabrano videozapisa: {count}. Redoslijed se može promijeniti ispod.",
+    "selectedBatch": "Odabrano datoteka: {count}. Rezultat se sprema uz svaki izvor.",
+    "needInputs": "Odaberite barem jednu izvornu datoteku.",
+    "needInput": "Odaberite izvornu datoteku.",
+    "needTargetSize": "Unesite ciljnu veličinu od najmanje 1 MB.",
+    "needTwoVideos": "Odaberite najmanje dva videozapisa.",
+    "joinCompress": "Spajanje i komprimiranje videozapisa ...",
+    "join": "Spajanje videozapisa ...",
+    "compress": "Komprimiranje videa na najviše {mb} MB ...",
+    "needClipTimes": "Unesite početak/kraj u formatu HH:MM:SS.",
+    "clipRemove": "Uklanjanje isječka ...",
+    "clipCut": "Izrezivanje isječka ...",
+    "converting": "Pretvorba u tijeku ...",
+    "done": "Gotovo za {elapsed}.",
+    "batchDone": "Gotovo datoteka: {count} za {elapsed}.",
+    "cancelled": "Otkazano.",
+    "error": "Pogreška: {message}",
+    "warning": "Upozorenje: {message}",
+    "cancelRequested": "Zahtjev za otkazivanje ...",
+    "cancelRunning": "Otkazivanje u tijeku ...",
+    "cancelQueued": "Otkazivanje zakazano ...",
+    "logFile": "Datoteka zapisnika: {path}",
+    "logFileCopied": "Datoteka zapisnika: {path}\n(Putanja kopirana.)"
+  },
+  "dialog": {
+    "logTitle": "Putanja zapisnika",
+    "lameTitle": "Provjera LAME",
+    "lameFailed": "Provjera LAME nije uspjela."
+  },
+  "about": {
+    "description": "Pretvara, reže, komprimira i spaja audio i video datoteke.",
+    "author": "Autor",
+    "license": "Licenca",
+    "source": "Izvorni kod",
+    "base": "Temelji se na",
+    "uses": "Koristi",
+    "close": "Zatvori"
+  },
+  "errors": {
+    "log_path_unavailable": "Nije moguće odrediti putanju zapisnika.",
+    "output_dir_create": "Nije moguće stvoriti odredišnu mapu",
+    "ffprobe_start": "Nije moguće pokrenuti ffprobe",
+    "ffprobe_duration_failed": "ffprobe nije uspio odrediti trajanje.",
+    "ffprobe_tags_failed": "ffprobe nije uspio provjeriti oznake MP3 kodera.",
+    "duration_unreadable": "Nije moguće pročitati trajanje.",
+    "duration_invalid": "Trajanje videa nije valjano.",
+    "duration_unknown": "Nije moguće odrediti trajanje videa.",
+    "unknown_audio_adjustment": "Nepoznata prilagodba glasnoće.",
+    "unknown_mode": "Nepoznat način.",
+    "empty_command": "Prazna ffmpeg/lame naredba.",
+    "ffmpeg_start": "Nije moguće pokrenuti ffmpeg",
+    "ffmpeg_read": "Nije moguće pročitati izlaz ffmpega",
+    "ffmpeg_stdout_unavailable": "Izlaz ffmpega nije dostupan.",
+    "ffmpeg_failed": "ffmpeg nije uspio (izlazni kod {exit})",
+    "lame_start": "Nije moguće pokrenuti lame",
+    "lame_failed": "lame nije uspio (izlazni kod {exit})",
+    "lame_tag_missing": "MP3 nije kodiran s LAME (nije pronađena oznaka LAME kodera).",
+    "lame_version_mismatch": "Oznaka MP3 kodera ne sadrži instaliranu verziju LAME ({version}).",
+    "lock_error": "Interna pogreška zaključavanja.",
+    "kill_failed": "Nije moguće zaustaviti proces",
+    "no_running_process": "Nema pokrenutog procesa.",
+    "invalid_input": "Odaberite valjanu ulaznu datoteku.",
+    "input_not_found": "Ulazna datoteka nije pronađena: {path}",
+    "same_input_output": "Izvor i odredište ne smiju biti isti.",
+    "target_size_min": "Ciljna veličina mora biti najmanje 1 MB.",
+    "target_size_too_small": "Odabrana veličina je premala za trajanje videa.",
+    "join_min_two": "Odaberite najmanje dva videozapisa.",
+    "join_output_overwrites_input": "Odredište ne smije prebrisati nijednu izvornu datoteku.",
+    "path_unreadable": "Nije moguće pročitati putanju ({path})",
+    "temp_list_create": "Nije moguće stvoriti privremeni popis datoteka",
+    "time_format_invalid": "Neispravan format vremena. Koristite HH:MM:SS.",
+    "task_failed": "Interna pogreška obrade"
+  },
+  "suffix": {
+    "clip": "isjecak",
+    "clipRemoved": "bez_isjecka",
+    "compressed": "komprimirano",
+    "joined": "spojeno",
+    "audioAdjusted": "audio_prilagoden"
+  }
+}

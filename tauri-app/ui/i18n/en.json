@@ -149,5 +149,12 @@
     "temp_list_create": "Could not create the temporary file list",
     "time_format_invalid": "Invalid time format. Please use HH:MM:SS.",
     "task_failed": "Internal processing error"
+  },
+  "suffix": {
+    "clip": "clip",
+    "clipRemoved": "without_clip",
+    "compressed": "compressed",
+    "joined": "joined",
+    "audioAdjusted": "audio_adjusted"
   }
 }

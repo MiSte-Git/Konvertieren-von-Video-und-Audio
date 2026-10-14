@@ -14,22 +14,23 @@ This repository contains two variants:
 - Compress videos to a freely selectable maximum size using two-pass H.264 encoding (default: 100 MB).
 - Join several videos in a changeable order without re-encoding.
 - Optionally compress the joined video to the selected maximum size afterwards.
-- User interface in German and English, switchable via the flags at the top of the window (see [Languages](#languages)).
+- User interface in 10 languages, switchable via the flags at the top of the window (see [Languages](#languages)).
 - Version shown below the title and an **About** dialog with version, license and components used.
 
 When joining without compression, the video and audio streams of the source files must be compatible.
 
 ## Languages
 
-The user interface is available in German and English.
+The user interface is available in German, English, French, Italian, Russian, Polish, Spanish, Croatian, Dutch and Finnish.
 - On first start the system language is used. If it is not available, the app starts in English.
 - The flags above the title switch the language at any time. The choice is saved (`localStorage`).
 - Error messages from the Rust side are sent to the UI as error codes and translated there.
+- Suggested output file names use suffixes in the selected language (e.g. `_komprimiert`, `_compressed`, `_comprimido`). A suggested name is updated when the language changes, a name you entered yourself is not.
 
-Adding a language (e.g. Spanish):
-1. Copy `tauri-app/ui/i18n/en.json` to `es.json` and translate it (keep placeholders such as `{count}`).
-2. Add the flag as `tauri-app/ui/assets/flags/es.png` (22 px wide) and `es@2x.png`.
-3. Add `{ code: "es", name: "Español" }` to the `LANGUAGES` list in `tauri-app/ui/app.js`.
+Adding a language (e.g. Portuguese):
+1. Copy `tauri-app/ui/i18n/en.json` to `pt.json` and translate it (keep placeholders such as `{count}`, suffixes under `suffix` without spaces or special characters).
+2. Add the flag as `tauri-app/ui/assets/flags/pt.png` (22 px wide) and `pt@2x.png`.
+3. Add `{ code: "pt", name: "Português" }` to the `LANGUAGES` list in `tauri-app/ui/app.js`.
 
 Static texts in the HTML carry `data-i18n` (or `data-i18n-title`, `data-i18n-placeholder`, `data-i18n-aria-label`); texts set from JavaScript use `t("key", { param })`. Create new Rust errors with `app_err("code")` or `app_err_with("code", &[("param", value)])` and add the key `errors.code` to every language file.
 
@@ -92,13 +93,13 @@ In dev mode `ffmpeg`, `ffprobe` and `lame` are taken from the `PATH`, so they mu
 1. Bump the version in `tauri-app/src-tauri/Cargo.toml`. This is the only place for the version: `tauri.conf.json` contains no version, and the app shows the version from `Cargo.toml` below the title and in the **About** dialog.
 2. Commit, then create and push a tag. The tag must match the version (`v` + version from `Cargo.toml`):
    ```bash
-   git tag v0.3.0
-   git push origin v0.3.0
+   git tag v1.0.0
+   git push origin v1.0.0
    ```
 3. GitHub Actions (`.github/workflows/release.yml`) builds all installers and creates a **draft release**. Review it and publish it under *Releases*.
 
 Notes:
-- Use numeric versions only (`0.3.0`, not `0.3.0-beta.1`). The Windows MSI installer (WiX) does not accept pre-release suffixes, the build fails otherwise.
+- Use numeric versions only (`1.0.0`, not `1.0.0-beta.1`). The Windows MSI installer (WiX) does not accept pre-release suffixes, the build fails otherwise.
 - For test builds, tag normally and mark the release on GitHub as *Pre-release* instead.
 - *Re-run* of an Actions run builds the old commit. After changes, push a new tag or use *Run workflow*.
 
@@ -196,7 +197,7 @@ tauri-app/                     # Tauri GUI (Rust + HTML/JS)
   src-tauri/                   # Rust part, version in Cargo.toml
   src-tauri/ci/                # Extra config for CI (bundle ffmpeg/lame)
   ui/                          # User interface (index.html, app.js, style.css)
-  ui/i18n/                     # Language files (de.json, en.json)
+  ui/i18n/                     # Language files (de.json, en.json, ...)
   ui/assets/flags/             # Flags for the language selection
 scripts/dev/                   # Dev launchers (Windows/Linux/macOS)
 scripts/ci/                    # Helper scripts for GitHub Actions

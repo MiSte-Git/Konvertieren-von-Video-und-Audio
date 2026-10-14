@@ -17,6 +17,14 @@ const invoke =
 const LANGUAGES = [
   { code: "de", name: "Deutsch" },
   { code: "en", name: "English" },
+  { code: "fr", name: "Français" },
+  { code: "it", name: "Italiano" },
+  { code: "ru", name: "Русский" },
+  { code: "pl", name: "Polski" },
+  { code: "es", name: "Español" },
+  { code: "hr", name: "Hrvatski" },
+  { code: "nl", name: "Nederlands" },
+  { code: "fi", name: "Suomi" },
 ];
 const FALLBACK_LANGUAGE = "en";
 const LANGUAGE_STORAGE_KEY = "konvertierung.language";
@@ -307,27 +315,45 @@ function tsSuffix() {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 }
 
+// Dateinamen-Endung in der aktuellen Sprache (suffix.<key> in ui/i18n/*.json).
+// Zeichen, die in Dateinamen nicht erlaubt sind, werden entfernt.
+const SUFFIX_FALLBACK = {
+  clip: "ausschnitt",
+  clipRemoved: "ohne_ausschnitt",
+  compressed: "komprimiert",
+  joined: "zusammengefuegt",
+  audioAdjusted: "audio_angepasst",
+};
+
+function fileSuffix(key) {
+  const cleaned = t(`suffix.${key}`)
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "")
+    .replace(/\s+/g, "_");
+  return cleaned || SUFFIX_FALLBACK[key];
+}
+
 function defaultOutput(input, mode, clipMode) {
   if (!input) return "";
   const { dir, base, sep } = splitPath(input);
   const stem = stripExt(base);
   if (mode === "clip") {
-    const suffix = clipMode === "minus" ? "minus_clip" : "clip";
+    const suffix = fileSuffix(clipMode === "minus" ? "clipRemoved" : "clip");
     const name = `${stem}_${suffix}_${tsSuffix()}.mp4`;
     return dir ? `${dir}${sep}${name}` : name;
   }
   if (mode === "targetsize") {
-    const name = `${stem}_komprimiert.mp4`;
+    const name = `${stem}_${fileSuffix("compressed")}.mp4`;
     return dir ? `${dir}${sep}${name}` : name;
   }
   if (mode === "join") {
-    const name = `${stem}_zusammengefuegt.mp4`;
+    const name = `${stem}_${fileSuffix("joined")}.mp4`;
     return dir ? `${dir}${sep}${name}` : name;
   }
   if (mode === "adjustvideoaudio") {
     const extensionIndex = base.lastIndexOf(".");
     const extension = extensionIndex > 0 ? base.slice(extensionIndex) : ".mp4";
-    const name = `${stem}_audio_angepasst${extension}`;
+    const name = `${stem}_${fileSuffix("audioAdjusted")}${extension}`;
     return dir ? `${dir}${sep}${name}` : name;
   }
   const ext = mode === "divx" ? "_DivX.avi" : "_LAME.mp3";
@@ -907,6 +933,17 @@ async function loadVersionInfo() {
   renderVersion();
 }
 
+// Automatisch vorgeschlagenen Zielnamen an die neue Sprache anpassen,
+// sofern der Nutzer ihn nicht selbst geaendert hat.
+function refreshAutoOutput() {
+  if (isBatchModeActive() || !lastAutoOutput || outputPath.value !== lastAutoOutput) return;
+  const inputs = getInputList();
+  if (!inputs.length) return;
+  const proposed = defaultOutput(inputs[0], getMode(), getClipMode());
+  outputPath.value = proposed;
+  lastAutoOutput = proposed;
+}
+
 // Texte, die per JS gesetzt werden, beim Sprachwechsel neu aufbauen.
 function refreshDynamicTexts() {
   if (statusRenderer) statusEl.textContent = statusRenderer();
@@ -916,6 +953,7 @@ function refreshDynamicTexts() {
     inputPath.value = t("files.selectedCount", { count: selectedInputs.length });
   }
   renderJoinOrder();
+  refreshAutoOutput();
   if (appVersionEl) renderVersion();
 }
 

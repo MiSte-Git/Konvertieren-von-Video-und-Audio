@@ -1,0 +1,160 @@
+{
+  "app": {
+    "about": "Over",
+    "version": "Versie {version}",
+    "versionUnknown": "Versie onbekend"
+  },
+  "lang": {
+    "label": "Taal"
+  },
+  "mode": {
+    "title": "Modus",
+    "v2mp3": "Video naar MP3",
+    "a2mp3": "Audio naar MP3",
+    "adjustvideoaudio": "Audiospoor in video aanpassen",
+    "divx": "Video naar AVI (DivX)",
+    "clip": "Videofragment",
+    "targetsize": "Video comprimeren tot doelgrootte",
+    "join": "Video's samenvoegen"
+  },
+  "audio": {
+    "title": "Audio-uitvoeropties",
+    "adjustment": "Volumeaanpassing",
+    "option": {
+      "none": "Geen",
+      "normalize": "Normaliseren",
+      "speech": "Spraak gelijktrekken",
+      "strong": "Grote verschillen gelijktrekken"
+    },
+    "help": {
+      "none": "Het volume wordt niet gewijzigd.",
+      "normalize": "Past de totale luidheid van het bestand aan.",
+      "speech": "Trekt verschillende sprekersvolumes gelijk en begrenst volumepieken.",
+      "strong": "Voor opnamen met zeer zachte stemmen en plotseling zeer luide passages."
+    }
+  },
+  "join": {
+    "title": "Volgorde",
+    "help": "De video's worden van boven naar beneden samengevoegd. Met de pijlen kun je de volgorde wijzigen.",
+    "up": "Omhoog",
+    "down": "Omlaag",
+    "compressAfter": "Na het samenvoegen comprimeren tot deze doelgrootte",
+    "copyHint": "Zonder compressie worden de streams ongewijzigd gekopieerd. De video's moeten daarvoor compatibele beeld-, geluids- en formaatinstellingen hebben."
+  },
+  "target": {
+    "title": "Doelgrootte",
+    "maxSize": "Maximale grootte"
+  },
+  "files": {
+    "title": "Bestanden",
+    "source": "Bron",
+    "sourcePlaceholder": "Bronbestand kiezen",
+    "browseSource": "Bron kiezen",
+    "target": "Doel",
+    "targetPlaceholder": "Doelbestand (optioneel)",
+    "targetAuto": "Wordt per bestand automatisch aangemaakt",
+    "browseTarget": "Doel kiezen",
+    "selectedCount": "{count} bestanden geselecteerd",
+    "filterName": "Video/Audio"
+  },
+  "clip": {
+    "title": "Fragment",
+    "start": "Begin (HH:MM:SS)",
+    "end": "Einde (HH:MM:SS)",
+    "only": "Alleen fragment opslaan",
+    "onlyInfo": "Het origineel blijft ongewijzigd.",
+    "minus": "Fragment verwijderen",
+    "minusInfo": "Het origineel blijft behouden en er wordt een kopie gemaakt waarin het opgegeven fragment is verwijderd."
+  },
+  "actions": {
+    "start": "Starten",
+    "cancel": "Annuleren",
+    "logPath": "Logpad"
+  },
+  "status": {
+    "ready": "Gereed.",
+    "wait": "Even geduld ...",
+    "progress": "{done} / {total} (resterend {remaining})",
+    "batchFile": "Bestand {index}/{total}",
+    "batchSuffix": " Bestand {index}/{total}",
+    "selectedJoin": "{count} video's geselecteerd. De volgorde kan hieronder worden gewijzigd.",
+    "selectedBatch": "{count} bestanden geselecteerd. Elk resultaat wordt naast de bron opgeslagen.",
+    "needInputs": "Kies ten minste één bronbestand.",
+    "needInput": "Kies een bronbestand.",
+    "needTargetSize": "Voer een doelgrootte van ten minste 1 MB in.",
+    "needTwoVideos": "Kies ten minste twee video's.",
+    "joinCompress": "Video's samenvoegen en comprimeren ...",
+    "join": "Video's samenvoegen ...",
+    "compress": "Video comprimeren tot maximaal {mb} MB ...",
+    "needClipTimes": "Voer begin/einde in als HH:MM:SS.",
+    "clipRemove": "Fragment verwijderen ...",
+    "clipCut": "Fragment knippen ...",
+    "converting": "Bezig met converteren ...",
+    "done": "Klaar in {elapsed}.",
+    "batchDone": "{count} bestanden klaar in {elapsed}.",
+    "cancelled": "Geannuleerd.",
+    "error": "Fout: {message}",
+    "warning": "Waarschuwing: {message}",
+    "cancelRequested": "Annulering aangevraagd ...",
+    "cancelRunning": "Bezig met annuleren ...",
+    "cancelQueued": "Annulering gepland ...",
+    "logFile": "Logbestand: {path}",
+    "logFileCopied": "Logbestand: {path}\n(Pad gekopieerd.)"
+  },
+  "dialog": {
+    "logTitle": "Logpad",
+    "lameTitle": "LAME-controle",
+    "lameFailed": "LAME-controle mislukt."
+  },
+  "about": {
+    "description": "Converteert, knipt, comprimeert en voegt audio- en videobestanden samen.",
+    "author": "Auteur",
+    "license": "Licentie",
+    "source": "Broncode",
+    "base": "Gebaseerd op",
+    "uses": "Gebruikt",
+    "close": "Sluiten"
+  },
+  "errors": {
+    "log_path_unavailable": "Logpad kon niet worden bepaald.",
+    "output_dir_create": "Uitvoermap kan niet worden aangemaakt",
+    "ffprobe_start": "ffprobe kon niet worden gestart",
+    "ffprobe_duration_failed": "ffprobe kon de duur niet bepalen.",
+    "ffprobe_tags_failed": "ffprobe kon de MP3-encodertags niet controleren.",
+    "duration_unreadable": "Duur kon niet worden gelezen.",
+    "duration_invalid": "De videoduur is ongeldig.",
+    "duration_unknown": "De videoduur kon niet worden bepaald.",
+    "unknown_audio_adjustment": "Onbekende volumeaanpassing.",
+    "unknown_mode": "Onbekende modus.",
+    "empty_command": "Lege ffmpeg/lame-opdracht.",
+    "ffmpeg_start": "ffmpeg kon niet worden gestart",
+    "ffmpeg_read": "ffmpeg-uitvoer kon niet worden gelezen",
+    "ffmpeg_stdout_unavailable": "ffmpeg-uitvoer niet beschikbaar.",
+    "ffmpeg_failed": "ffmpeg mislukt (exitcode {exit})",
+    "lame_start": "lame kon niet worden gestart",
+    "lame_failed": "lame mislukt (exitcode {exit})",
+    "lame_tag_missing": "De MP3 is niet met LAME gecodeerd (geen LAME-encodertag gevonden).",
+    "lame_version_mismatch": "De MP3-encodertag bevat niet de geïnstalleerde LAME-versie ({version}).",
+    "lock_error": "Interne vergrendelingsfout.",
+    "kill_failed": "Proces kon niet worden beëindigd",
+    "no_running_process": "Geen actief proces.",
+    "invalid_input": "Kies een geldig invoerbestand.",
+    "input_not_found": "Invoerbestand niet gevonden: {path}",
+    "same_input_output": "Bron en doel mogen niet hetzelfde zijn.",
+    "target_size_min": "De doelgrootte moet ten minste 1 MB zijn.",
+    "target_size_too_small": "De gekozen doelgrootte is te klein voor de duur van de video.",
+    "join_min_two": "Kies ten minste twee video's.",
+    "join_output_overwrites_input": "Het doel mag geen van de bronbestanden overschrijven.",
+    "path_unreadable": "Pad kon niet worden gelezen ({path})",
+    "temp_list_create": "Tijdelijke bestandslijst kon niet worden aangemaakt",
+    "time_format_invalid": "Ongeldige tijdnotatie. Gebruik HH:MM:SS.",
+    "task_failed": "Interne verwerkingsfout"
+  },
+  "suffix": {
+    "clip": "fragment",
+    "clipRemoved": "zonder_fragment",
+    "compressed": "gecomprimeerd",
+    "joined": "samengevoegd",
+    "audioAdjusted": "audio_aangepast"
+  }
+}

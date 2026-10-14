@@ -1,0 +1,160 @@
+{
+  "app": {
+    "about": "Informazioni",
+    "version": "Versione {version}",
+    "versionUnknown": "Versione sconosciuta"
+  },
+  "lang": {
+    "label": "Lingua"
+  },
+  "mode": {
+    "title": "Modalità",
+    "v2mp3": "Video in MP3",
+    "a2mp3": "Audio in MP3",
+    "adjustvideoaudio": "Regola la traccia audio del video",
+    "divx": "Video in AVI (DivX)",
+    "clip": "Spezzone video",
+    "targetsize": "Comprimi il video a una dimensione",
+    "join": "Unisci video"
+  },
+  "audio": {
+    "title": "Opzioni di uscita audio",
+    "adjustment": "Regolazione del volume",
+    "option": {
+      "none": "Nessuna",
+      "normalize": "Normalizza",
+      "speech": "Bilancia il parlato",
+      "strong": "Compensa forti differenze"
+    },
+    "help": {
+      "none": "Il volume non viene modificato.",
+      "normalize": "Regola il volume complessivo del file.",
+      "speech": "Uniforma i diversi volumi delle voci e limita i picchi di volume.",
+      "strong": "Per registrazioni con voci molto basse e passaggi improvvisamente molto forti."
+    }
+  },
+  "join": {
+    "title": "Ordine",
+    "help": "I video vengono uniti dall'alto verso il basso. Con le frecce si può cambiare l'ordine.",
+    "up": "Sposta su",
+    "down": "Sposta giù",
+    "compressAfter": "Dopo l'unione comprimi a questa dimensione",
+    "copyHint": "Senza compressione i flussi vengono copiati invariati. I video devono avere impostazioni di immagine, audio e formato compatibili."
+  },
+  "target": {
+    "title": "Dimensione di destinazione",
+    "maxSize": "Dimensione massima"
+  },
+  "files": {
+    "title": "File",
+    "source": "Origine",
+    "sourcePlaceholder": "Scegli il file di origine",
+    "browseSource": "Scegli origine",
+    "target": "Destinazione",
+    "targetPlaceholder": "File di destinazione (facoltativo)",
+    "targetAuto": "Creato automaticamente per ogni file",
+    "browseTarget": "Scegli destinazione",
+    "selectedCount": "{count} file selezionati",
+    "filterName": "Video/Audio"
+  },
+  "clip": {
+    "title": "Spezzone",
+    "start": "Inizio (HH:MM:SS)",
+    "end": "Fine (HH:MM:SS)",
+    "only": "Salva solo lo spezzone",
+    "onlyInfo": "L'originale resta invariato.",
+    "minus": "Rimuovi lo spezzone",
+    "minusInfo": "L'originale viene mantenuto e viene creata una copia da cui è stata rimossa la parte indicata."
+  },
+  "actions": {
+    "start": "Avvia",
+    "cancel": "Annulla",
+    "logPath": "Percorso log"
+  },
+  "status": {
+    "ready": "Pronto.",
+    "wait": "Attendere ...",
+    "progress": "{done} / {total} (restano {remaining})",
+    "batchFile": "File {index}/{total}",
+    "batchSuffix": " File {index}/{total}",
+    "selectedJoin": "{count} video selezionati. L'ordine può essere modificato qui sotto.",
+    "selectedBatch": "{count} file selezionati. Ogni risultato viene salvato accanto all'origine.",
+    "needInputs": "Scegli almeno un file di origine.",
+    "needInput": "Scegli un file di origine.",
+    "needTargetSize": "Inserisci una dimensione di almeno 1 MB.",
+    "needTwoVideos": "Scegli almeno due video.",
+    "joinCompress": "Unione e compressione dei video ...",
+    "join": "Unione dei video ...",
+    "compress": "Compressione del video a massimo {mb} MB ...",
+    "needClipTimes": "Inserisci inizio/fine nel formato HH:MM:SS.",
+    "clipRemove": "Rimozione dello spezzone ...",
+    "clipCut": "Taglio dello spezzone ...",
+    "converting": "Conversione in corso ...",
+    "done": "Completato in {elapsed}.",
+    "batchDone": "{count} file completati in {elapsed}.",
+    "cancelled": "Annullato.",
+    "error": "Errore: {message}",
+    "warning": "Avviso: {message}",
+    "cancelRequested": "Richiesta di annullamento ...",
+    "cancelRunning": "Annullamento in corso ...",
+    "cancelQueued": "Annullamento in attesa ...",
+    "logFile": "File di log: {path}",
+    "logFileCopied": "File di log: {path}\n(Percorso copiato.)"
+  },
+  "dialog": {
+    "logTitle": "Percorso log",
+    "lameTitle": "Verifica LAME",
+    "lameFailed": "Verifica LAME non riuscita."
+  },
+  "about": {
+    "description": "Converte, taglia, comprime e unisce file audio e video.",
+    "author": "Autore",
+    "license": "Licenza",
+    "source": "Codice sorgente",
+    "base": "Basato su",
+    "uses": "Utilizza",
+    "close": "Chiudi"
+  },
+  "errors": {
+    "log_path_unavailable": "Impossibile determinare il percorso del log.",
+    "output_dir_create": "Impossibile creare la cartella di destinazione",
+    "ffprobe_start": "Impossibile avviare ffprobe",
+    "ffprobe_duration_failed": "ffprobe non è riuscito a determinare la durata.",
+    "ffprobe_tags_failed": "ffprobe non è riuscito a verificare i tag dell'encoder MP3.",
+    "duration_unreadable": "Impossibile leggere la durata.",
+    "duration_invalid": "La durata del video non è valida.",
+    "duration_unknown": "Impossibile determinare la durata del video.",
+    "unknown_audio_adjustment": "Regolazione del volume sconosciuta.",
+    "unknown_mode": "Modalità sconosciuta.",
+    "empty_command": "Comando ffmpeg/lame vuoto.",
+    "ffmpeg_start": "Impossibile avviare ffmpeg",
+    "ffmpeg_read": "Impossibile leggere l'output di ffmpeg",
+    "ffmpeg_stdout_unavailable": "Output di ffmpeg non disponibile.",
+    "ffmpeg_failed": "ffmpeg non riuscito (codice di uscita {exit})",
+    "lame_start": "Impossibile avviare lame",
+    "lame_failed": "lame non riuscito (codice di uscita {exit})",
+    "lame_tag_missing": "L'MP3 non è stato codificato con LAME (nessun tag encoder LAME trovato).",
+    "lame_version_mismatch": "Il tag encoder MP3 non contiene la versione di LAME installata ({version}).",
+    "lock_error": "Errore di blocco interno.",
+    "kill_failed": "Impossibile terminare il processo",
+    "no_running_process": "Nessun processo in esecuzione.",
+    "invalid_input": "Scegli un file di ingresso valido.",
+    "input_not_found": "File di ingresso non trovato: {path}",
+    "same_input_output": "Origine e destinazione non possono coincidere.",
+    "target_size_min": "La dimensione deve essere di almeno 1 MB.",
+    "target_size_too_small": "La dimensione scelta è troppo piccola per la durata del video.",
+    "join_min_two": "Scegli almeno due video.",
+    "join_output_overwrites_input": "La destinazione non deve sovrascrivere nessuno dei file di origine.",
+    "path_unreadable": "Impossibile leggere il percorso ({path})",
+    "temp_list_create": "Impossibile creare l'elenco temporaneo dei file",
+    "time_format_invalid": "Formato orario non valido. Usa HH:MM:SS.",
+    "task_failed": "Errore interno di elaborazione"
+  },
+  "suffix": {
+    "clip": "spezzone",
+    "clipRemoved": "senza_spezzone",
+    "compressed": "compresso",
+    "joined": "unito",
+    "audioAdjusted": "audio_regolato"
+  }
+}

@@ -149,5 +149,12 @@
     "temp_list_create": "Temporäre Dateiliste konnte nicht erstellt werden",
     "time_format_invalid": "Zeitformat ungültig. Bitte HH:MM:SS verwenden.",
     "task_failed": "Interner Fehler bei der Verarbeitung"
+  },
+  "suffix": {
+    "clip": "ausschnitt",
+    "clipRemoved": "ohne_ausschnitt",
+    "compressed": "komprimiert",
+    "joined": "zusammengefuegt",
+    "audioAdjusted": "audio_angepasst"
   }
 }

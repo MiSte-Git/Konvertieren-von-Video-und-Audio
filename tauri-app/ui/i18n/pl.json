@@ -1,0 +1,160 @@
+{
+  "app": {
+    "about": "O programie",
+    "version": "Wersja {version}",
+    "versionUnknown": "Wersja nieznana"
+  },
+  "lang": {
+    "label": "Język"
+  },
+  "mode": {
+    "title": "Tryb",
+    "v2mp3": "Wideo do MP3",
+    "a2mp3": "Audio do MP3",
+    "adjustvideoaudio": "Dostosuj ścieżkę audio w wideo",
+    "divx": "Wideo do AVI (DivX)",
+    "clip": "Fragment wideo",
+    "targetsize": "Kompresuj wideo do rozmiaru docelowego",
+    "join": "Połącz filmy"
+  },
+  "audio": {
+    "title": "Opcje wyjścia audio",
+    "adjustment": "Regulacja głośności",
+    "option": {
+      "none": "Brak",
+      "normalize": "Normalizuj",
+      "speech": "Wyrównaj mowę",
+      "strong": "Wyrównaj duże różnice"
+    },
+    "help": {
+      "none": "Głośność nie jest zmieniana.",
+      "normalize": "Dostosowuje ogólną głośność pliku.",
+      "speech": "Wyrównuje głośność różnych mówców i ogranicza szczyty głośności.",
+      "strong": "Do nagrań z bardzo cichymi głosami i nagłymi, bardzo głośnymi fragmentami."
+    }
+  },
+  "join": {
+    "title": "Kolejność",
+    "help": "Filmy są łączone od góry do dołu. Strzałkami można zmienić kolejność.",
+    "up": "W górę",
+    "down": "W dół",
+    "compressAfter": "Po połączeniu kompresuj do tego rozmiaru",
+    "copyHint": "Bez kompresji strumienie są kopiowane bez zmian. Filmy muszą mieć zgodne ustawienia obrazu, dźwięku i formatu."
+  },
+  "target": {
+    "title": "Rozmiar docelowy",
+    "maxSize": "Maksymalny rozmiar"
+  },
+  "files": {
+    "title": "Pliki",
+    "source": "Źródło",
+    "sourcePlaceholder": "Wybierz plik źródłowy",
+    "browseSource": "Wybierz źródło",
+    "target": "Cel",
+    "targetPlaceholder": "Plik docelowy (opcjonalnie)",
+    "targetAuto": "Tworzony automatycznie dla każdego pliku",
+    "browseTarget": "Wybierz cel",
+    "selectedCount": "Wybrane pliki: {count}",
+    "filterName": "Wideo/Audio"
+  },
+  "clip": {
+    "title": "Fragment",
+    "start": "Początek (HH:MM:SS)",
+    "end": "Koniec (HH:MM:SS)",
+    "only": "Zapisz tylko fragment",
+    "onlyInfo": "Oryginał pozostaje bez zmian.",
+    "minus": "Usuń fragment",
+    "minusInfo": "Oryginał zostaje zachowany i tworzona jest kopia, z której usunięto wskazany fragment."
+  },
+  "actions": {
+    "start": "Start",
+    "cancel": "Anuluj",
+    "logPath": "Ścieżka logu"
+  },
+  "status": {
+    "ready": "Gotowe.",
+    "wait": "Proszę czekać ...",
+    "progress": "{done} / {total} (pozostało {remaining})",
+    "batchFile": "Plik {index}/{total}",
+    "batchSuffix": " Plik {index}/{total}",
+    "selectedJoin": "Wybrane filmy: {count}. Kolejność można zmienić poniżej.",
+    "selectedBatch": "Wybrane pliki: {count}. Wynik jest zapisywany obok każdego źródła.",
+    "needInputs": "Wybierz co najmniej jeden plik źródłowy.",
+    "needInput": "Wybierz plik źródłowy.",
+    "needTargetSize": "Podaj rozmiar docelowy co najmniej 1 MB.",
+    "needTwoVideos": "Wybierz co najmniej dwa filmy.",
+    "joinCompress": "Łączenie i kompresja filmów ...",
+    "join": "Łączenie filmów ...",
+    "compress": "Kompresja wideo do maks. {mb} MB ...",
+    "needClipTimes": "Podaj początek/koniec w formacie HH:MM:SS.",
+    "clipRemove": "Usuwanie fragmentu ...",
+    "clipCut": "Wycinanie fragmentu ...",
+    "converting": "Trwa konwersja ...",
+    "done": "Gotowe w {elapsed}.",
+    "batchDone": "Ukończono pliki: {count} w {elapsed}.",
+    "cancelled": "Anulowano.",
+    "error": "Błąd: {message}",
+    "warning": "Ostrzeżenie: {message}",
+    "cancelRequested": "Żądanie anulowania ...",
+    "cancelRunning": "Anulowanie ...",
+    "cancelQueued": "Anulowanie zaplanowane ...",
+    "logFile": "Plik logu: {path}",
+    "logFileCopied": "Plik logu: {path}\n(Ścieżka skopiowana.)"
+  },
+  "dialog": {
+    "logTitle": "Ścieżka logu",
+    "lameTitle": "Kontrola LAME",
+    "lameFailed": "Kontrola LAME nie powiodła się."
+  },
+  "about": {
+    "description": "Konwertuje, przycina, kompresuje i łączy pliki audio i wideo.",
+    "author": "Autor",
+    "license": "Licencja",
+    "source": "Kod źródłowy",
+    "base": "Oparte na",
+    "uses": "Używa",
+    "close": "Zamknij"
+  },
+  "errors": {
+    "log_path_unavailable": "Nie można ustalić ścieżki logu.",
+    "output_dir_create": "Nie można utworzyć folderu docelowego",
+    "ffprobe_start": "Nie można uruchomić ffprobe",
+    "ffprobe_duration_failed": "ffprobe nie ustalił czasu trwania.",
+    "ffprobe_tags_failed": "ffprobe nie sprawdził tagów kodera MP3.",
+    "duration_unreadable": "Nie można odczytać czasu trwania.",
+    "duration_invalid": "Czas trwania wideo jest nieprawidłowy.",
+    "duration_unknown": "Nie można ustalić czasu trwania wideo.",
+    "unknown_audio_adjustment": "Nieznana regulacja głośności.",
+    "unknown_mode": "Nieznany tryb.",
+    "empty_command": "Puste polecenie ffmpeg/lame.",
+    "ffmpeg_start": "Nie można uruchomić ffmpeg",
+    "ffmpeg_read": "Nie można odczytać wyjścia ffmpeg",
+    "ffmpeg_stdout_unavailable": "Wyjście ffmpeg niedostępne.",
+    "ffmpeg_failed": "Błąd ffmpeg (kod wyjścia {exit})",
+    "lame_start": "Nie można uruchomić lame",
+    "lame_failed": "Błąd lame (kod wyjścia {exit})",
+    "lame_tag_missing": "MP3 nie zostało zakodowane przez LAME (brak tagu kodera LAME).",
+    "lame_version_mismatch": "Tag kodera MP3 nie zawiera zainstalowanej wersji LAME ({version}).",
+    "lock_error": "Wewnętrzny błąd blokady.",
+    "kill_failed": "Nie można zakończyć procesu",
+    "no_running_process": "Brak uruchomionego procesu.",
+    "invalid_input": "Wybierz prawidłowy plik wejściowy.",
+    "input_not_found": "Nie znaleziono pliku wejściowego: {path}",
+    "same_input_output": "Źródło i cel nie mogą być takie same.",
+    "target_size_min": "Rozmiar docelowy musi wynosić co najmniej 1 MB.",
+    "target_size_too_small": "Wybrany rozmiar jest zbyt mały dla długości wideo.",
+    "join_min_two": "Wybierz co najmniej dwa filmy.",
+    "join_output_overwrites_input": "Cel nie może nadpisać żadnego z plików źródłowych.",
+    "path_unreadable": "Nie można odczytać ścieżki ({path})",
+    "temp_list_create": "Nie można utworzyć tymczasowej listy plików",
+    "time_format_invalid": "Nieprawidłowy format czasu. Użyj HH:MM:SS.",
+    "task_failed": "Wewnętrzny błąd przetwarzania"
+  },
+  "suffix": {
+    "clip": "fragment",
+    "clipRemoved": "bez_fragmentu",
+    "compressed": "skompresowany",
+    "joined": "polaczony",
+    "audioAdjusted": "audio_dostosowane"
+  }
+}

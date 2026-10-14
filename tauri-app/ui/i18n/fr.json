@@ -1,0 +1,160 @@
+{
+  "app": {
+    "about": "À propos",
+    "version": "Version {version}",
+    "versionUnknown": "Version inconnue"
+  },
+  "lang": {
+    "label": "Langue"
+  },
+  "mode": {
+    "title": "Mode",
+    "v2mp3": "Vidéo en MP3",
+    "a2mp3": "Audio en MP3",
+    "adjustvideoaudio": "Ajuster la piste audio de la vidéo",
+    "divx": "Vidéo en AVI (DivX)",
+    "clip": "Extrait vidéo",
+    "targetsize": "Compresser la vidéo à une taille cible",
+    "join": "Assembler des vidéos"
+  },
+  "audio": {
+    "title": "Options de sortie audio",
+    "adjustment": "Réglage du volume",
+    "option": {
+      "none": "Aucun",
+      "normalize": "Normaliser",
+      "speech": "Équilibrer la voix",
+      "strong": "Compenser de fortes différences"
+    },
+    "help": {
+      "none": "Le volume n'est pas modifié.",
+      "normalize": "Ajuste le volume global du fichier.",
+      "speech": "Égalise les différents volumes des voix et limite les pics de volume.",
+      "strong": "Pour les enregistrements avec des voix très faibles et des passages soudainement très forts."
+    }
+  },
+  "join": {
+    "title": "Ordre",
+    "help": "Les vidéos sont assemblées de haut en bas. Les flèches permettent de modifier l'ordre.",
+    "up": "Monter",
+    "down": "Descendre",
+    "compressAfter": "Compresser à cette taille cible après l'assemblage",
+    "copyHint": "Sans compression, les flux sont copiés tels quels. Les vidéos doivent pour cela avoir des paramètres d'image, de son et de format compatibles."
+  },
+  "target": {
+    "title": "Taille cible",
+    "maxSize": "Taille maximale"
+  },
+  "files": {
+    "title": "Fichiers",
+    "source": "Source",
+    "sourcePlaceholder": "Choisir le fichier source",
+    "browseSource": "Choisir la source",
+    "target": "Destination",
+    "targetPlaceholder": "Fichier de destination (facultatif)",
+    "targetAuto": "Créé automatiquement pour chaque fichier",
+    "browseTarget": "Choisir la destination",
+    "selectedCount": "{count} fichiers sélectionnés",
+    "filterName": "Vidéo/Audio"
+  },
+  "clip": {
+    "title": "Extrait",
+    "start": "Début (HH:MM:SS)",
+    "end": "Fin (HH:MM:SS)",
+    "only": "Enregistrer uniquement l'extrait",
+    "onlyInfo": "L'original reste inchangé.",
+    "minus": "Supprimer l'extrait",
+    "minusInfo": "L'original est conservé et une copie est créée dans laquelle la partie indiquée a été supprimée."
+  },
+  "actions": {
+    "start": "Démarrer",
+    "cancel": "Annuler",
+    "logPath": "Chemin du journal"
+  },
+  "status": {
+    "ready": "Prêt.",
+    "wait": "Veuillez patienter ...",
+    "progress": "{done} / {total} (reste {remaining})",
+    "batchFile": "Fichier {index}/{total}",
+    "batchSuffix": " Fichier {index}/{total}",
+    "selectedJoin": "{count} vidéos sélectionnées. L'ordre peut être modifié ci-dessous.",
+    "selectedBatch": "{count} fichiers sélectionnés. Chaque résultat est enregistré à côté de sa source.",
+    "needInputs": "Veuillez choisir au moins un fichier source.",
+    "needInput": "Veuillez choisir un fichier source.",
+    "needTargetSize": "Veuillez saisir une taille cible d'au moins 1 Mo.",
+    "needTwoVideos": "Veuillez choisir au moins deux vidéos.",
+    "joinCompress": "Assemblage et compression des vidéos ...",
+    "join": "Assemblage des vidéos ...",
+    "compress": "Compression de la vidéo à {mb} Mo maximum ...",
+    "needClipTimes": "Veuillez saisir le début et la fin au format HH:MM:SS.",
+    "clipRemove": "Suppression de l'extrait ...",
+    "clipCut": "Découpe de l'extrait ...",
+    "converting": "Conversion en cours ...",
+    "done": "Terminé en {elapsed}.",
+    "batchDone": "{count} fichiers terminés en {elapsed}.",
+    "cancelled": "Annulé.",
+    "error": "Erreur : {message}",
+    "warning": "Avertissement : {message}",
+    "cancelRequested": "Demande d'annulation ...",
+    "cancelRunning": "Annulation en cours ...",
+    "cancelQueued": "Annulation prévue ...",
+    "logFile": "Fichier journal : {path}",
+    "logFileCopied": "Fichier journal : {path}\n(Chemin copié.)"
+  },
+  "dialog": {
+    "logTitle": "Chemin du journal",
+    "lameTitle": "Vérification LAME",
+    "lameFailed": "La vérification LAME a échoué."
+  },
+  "about": {
+    "description": "Convertit, découpe, compresse et assemble des fichiers audio et vidéo.",
+    "author": "Auteur",
+    "license": "Licence",
+    "source": "Code source",
+    "base": "Basé sur",
+    "uses": "Utilise",
+    "close": "Fermer"
+  },
+  "errors": {
+    "log_path_unavailable": "Impossible de déterminer le chemin du journal.",
+    "output_dir_create": "Impossible de créer le dossier de sortie",
+    "ffprobe_start": "Impossible de démarrer ffprobe",
+    "ffprobe_duration_failed": "ffprobe n'a pas pu déterminer la durée.",
+    "ffprobe_tags_failed": "ffprobe n'a pas pu vérifier les balises d'encodeur MP3.",
+    "duration_unreadable": "Impossible de lire la durée.",
+    "duration_invalid": "La durée de la vidéo n'est pas valide.",
+    "duration_unknown": "Impossible de déterminer la durée de la vidéo.",
+    "unknown_audio_adjustment": "Réglage du volume inconnu.",
+    "unknown_mode": "Mode inconnu.",
+    "empty_command": "Commande ffmpeg/lame vide.",
+    "ffmpeg_start": "Impossible de démarrer ffmpeg",
+    "ffmpeg_read": "Impossible de lire la sortie de ffmpeg",
+    "ffmpeg_stdout_unavailable": "Sortie de ffmpeg indisponible.",
+    "ffmpeg_failed": "Échec de ffmpeg (code de sortie {exit})",
+    "lame_start": "Impossible de démarrer lame",
+    "lame_failed": "Échec de lame (code de sortie {exit})",
+    "lame_tag_missing": "Le MP3 n'a pas été encodé avec LAME (aucune balise d'encodeur LAME trouvée).",
+    "lame_version_mismatch": "La balise d'encodeur MP3 ne contient pas la version de LAME installée ({version}).",
+    "lock_error": "Erreur de verrouillage interne.",
+    "kill_failed": "Impossible d'arrêter le processus",
+    "no_running_process": "Aucun processus en cours.",
+    "invalid_input": "Veuillez choisir un fichier d'entrée valide.",
+    "input_not_found": "Fichier d'entrée introuvable : {path}",
+    "same_input_output": "La source et la destination ne doivent pas être identiques.",
+    "target_size_min": "La taille cible doit être d'au moins 1 Mo.",
+    "target_size_too_small": "La taille cible choisie est trop petite pour la durée de la vidéo.",
+    "join_min_two": "Veuillez choisir au moins deux vidéos.",
+    "join_output_overwrites_input": "La destination ne doit écraser aucun des fichiers source.",
+    "path_unreadable": "Impossible de lire le chemin ({path})",
+    "temp_list_create": "Impossible de créer la liste temporaire de fichiers",
+    "time_format_invalid": "Format d'heure invalide. Veuillez utiliser HH:MM:SS.",
+    "task_failed": "Erreur interne de traitement"
+  },
+  "suffix": {
+    "clip": "extrait",
+    "clipRemoved": "sans_extrait",
+    "compressed": "compresse",
+    "joined": "assemble",
+    "audioAdjusted": "audio_ajuste"
+  }
+}
