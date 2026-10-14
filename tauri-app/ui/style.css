@@ -36,6 +36,75 @@ header p {
   color: var(--muted);
 }
 
+.app-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.version {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.about {
+  width: min(440px, 90vw);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px;
+  color: var(--ink);
+  background: var(--card);
+  box-shadow: 0 20px 50px rgba(31, 24, 15, 0.25);
+  text-align: center;
+}
+
+.about::backdrop {
+  background: rgba(28, 28, 28, 0.35);
+}
+
+.about h2 {
+  margin: 8px 0 4px;
+  font-size: 20px;
+}
+
+.about p {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.about-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.about-version {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.about-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 12px;
+  margin: 16px 0;
+  font-size: 13px;
+  text-align: left;
+}
+
+.about-meta dt {
+  color: var(--muted);
+}
+
+.about-meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.about-actions {
+  margin: 0;
+}
+
 .card {
   background: var(--card);
   border: 1px solid var(--line);

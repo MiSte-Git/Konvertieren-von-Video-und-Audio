@@ -7,13 +7,16 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>Konvertierung Audio-Video</title>
-    <link rel="stylesheet" href="style.css?v=6" />
+    <link rel="stylesheet" href="style.css?v=7" />
   </head>
   <body>
     <div class="app">
-      <header>
-        <h1>Konvertierung Audio-Video</h1>
-        <p>Plattformunabhängige GUI (Tauri)</p>
+      <header class="app-header">
+        <div>
+          <h1>Konvertierung Audio-Video</h1>
+          <p><span id="appVersion" class="version">Version …</span></p>
+        </div>
+        <button id="aboutBtn" class="secondary" type="button">Über</button>
       </header>
 
       <section class="card">
@@ -119,6 +122,23 @@
       </section>
     </div>
 
-    <script src="app.js?v=7"></script>
+    <dialog id="aboutDialog" class="about">
+      <img src="icon.png" alt="" class="about-icon" onerror="this.remove()" />
+      <h2>Konvertierung Audio-Video</h2>
+      <p class="about-version" id="aboutVersion">Version …</p>
+      <p>Konvertiert, schneidet, komprimiert und fügt Audio- und Videodateien zusammen.</p>
+      <dl class="about-meta">
+        <dt>Autor</dt><dd>Michael Stegmann</dd>
+        <dt>Lizenz</dt><dd>GNU GPL v3</dd>
+        <dt>Quellcode</dt><dd>github.com/MiSte-Git/Konvertieren-von-Video-und-Audio</dd>
+        <dt>Basis</dt><dd id="aboutTauri">Tauri</dd>
+        <dt>Verwendet</dt><dd>FFmpeg (ffmpeg.org), LAME (lame.sourceforge.io)</dd>
+      </dl>
+      <form method="dialog" class="about-actions">
+        <button class="primary" type="submit">Schließen</button>
+      </form>
+    </dialog>
+
+    <script src="app.js?v=8"></script>
   </body>
 </html>

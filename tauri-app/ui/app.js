@@ -701,3 +701,37 @@ logBtn.addEventListener("click", async () => {
     setStatus(`Fehler: ${err}`);
   }
 });
+
+const appVersionEl = document.getElementById("appVersion");
+const aboutBtn = document.getElementById("aboutBtn");
+const aboutDialog = document.getElementById("aboutDialog");
+const aboutVersionEl = document.getElementById("aboutVersion");
+const aboutTauriEl = document.getElementById("aboutTauri");
+
+async function loadVersionInfo() {
+  if (!invoke) {
+    appVersionEl.textContent = "Version unbekannt";
+    aboutVersionEl.textContent = "Version unbekannt";
+    return;
+  }
+  try {
+    const version = await invoke("plugin:app|version");
+    appVersionEl.textContent = `Version ${version}`;
+    aboutVersionEl.textContent = `Version ${version}`;
+  } catch (err) {
+    appVersionEl.textContent = "Version unbekannt";
+    aboutVersionEl.textContent = "Version unbekannt";
+  }
+  try {
+    const tauriVersion = await invoke("plugin:app|tauri_version");
+    aboutTauriEl.textContent = `Tauri ${tauriVersion}`;
+  } catch (err) {
+    /* optional */
+  }
+}
+
+aboutBtn?.addEventListener("click", () => {
+  if (aboutDialog?.showModal) aboutDialog.showModal();
+});
+
+loadVersionInfo();
