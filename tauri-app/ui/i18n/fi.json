@@ -87,6 +87,7 @@
     "join": "Yhdistetään videoita ...",
     "compress": "Pakataan video enintään {mb} Mt:iin ...",
     "needClipTimes": "Anna alku ja loppu muodossa HH:MM:SS.",
+    "clipEndBeforeStart": "Lopun on oltava alun jälkeen.",
     "clipRemove": "Poistetaan leikettä ...",
     "clipCut": "Leikataan leikettä ...",
     "converting": "Muunnetaan ...",

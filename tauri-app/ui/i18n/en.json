@@ -87,6 +87,7 @@
     "join": "Joining videos ...",
     "compress": "Compressing video to at most {mb} MB ...",
     "needClipTimes": "Please enter start/end in HH:MM:SS format.",
+    "clipEndBeforeStart": "The end must be after the start.",
     "clipRemove": "Removing clip ...",
     "clipCut": "Cutting clip ...",
     "converting": "Converting ...",

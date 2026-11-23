@@ -87,6 +87,7 @@
     "join": "Videos zusammenfügen ...",
     "compress": "Video auf maximal {mb} MB komprimieren ...",
     "needClipTimes": "Bitte Start/Ende im Format HH:MM:SS eingeben.",
+    "clipEndBeforeStart": "Das Ende muss nach dem Start liegen.",
     "clipRemove": "Ausschnitt entfernen ...",
     "clipCut": "Ausschnitt schneiden ...",
     "converting": "Konvertierung läuft ...",

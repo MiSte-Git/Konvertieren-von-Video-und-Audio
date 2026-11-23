@@ -87,6 +87,7 @@
     "join": "Unione dei video ...",
     "compress": "Compressione del video a massimo {mb} MB ...",
     "needClipTimes": "Inserisci inizio/fine nel formato HH:MM:SS.",
+    "clipEndBeforeStart": "La fine deve essere dopo l’inizio.",
     "clipRemove": "Rimozione dello spezzone ...",
     "clipCut": "Taglio dello spezzone ...",
     "converting": "Conversione in corso ...",

@@ -452,8 +452,97 @@ function updateOutputControls() {
 }
 
 function isTime(value) {
-  return /^\d{2}:\d{2}:\d{2}$/.test(value);
+  const match = /^(\d{2}):(\d{2}):(\d{2})$/.exec(value);
+  return !!match && Number(match[2]) < 60 && Number(match[3]) < 60;
 }
+
+function timeToSeconds(value) {
+  const [h, m, s] = value.split(":").map(Number);
+  return h * 3600 + m * 60 + s;
+}
+
+// Zeiteingabe beim Tippen formatieren: nur Ziffern, Punkt/Komma werden zu
+// Doppelpunkten, nach je zwei Ziffern wird automatisch ein Doppelpunkt
+// eingefuegt (010203 -> 01:02:03). Maximal HH:MM:SS.
+function formatTimeTyping(raw) {
+  const segments = [""];
+  let explicitColon = false;
+  for (const ch of raw.replace(/[.,]/g, ":")) {
+    const current = segments.length - 1;
+    if (ch === ":") {
+      if (segments[current] && segments.length < 3) {
+        segments.push("");
+        explicitColon = true;
+      }
+      continue;
+    }
+    if (!/\d/.test(ch)) continue;
+    if (segments[current].length === 2) {
+      if (segments.length === 3) break;
+      segments.push("");
+    }
+    segments[segments.length - 1] += ch;
+    explicitColon = false;
+  }
+  let text = segments.filter((seg, i) => seg || i < segments.length - 1).join(":");
+  if (explicitColon && !text.endsWith(":")) text += ":";
+  return text;
+}
+
+// Beim Verlassen des Feldes vervollstaendigen: 1:2:3 -> 01:02:03,
+// fehlende Teile werden mit 00 aufgefuellt (0130 -> 01:30:00).
+function normalizeTime(value) {
+  const parts = formatTimeTyping(value).split(":").filter(Boolean);
+  if (!parts.length) return "";
+  while (parts.length < 3) parts.push("00");
+  return parts.map((part) => part.padStart(2, "0")).join(":");
+}
+
+function validateClipFields() {
+  const startValue = clipStart.value;
+  const endValue = clipEnd.value;
+  const startOk = !startValue || isTime(startValue);
+  let endOk = !endValue || isTime(endValue);
+  if (startOk && endOk && startValue && endValue && timeToSeconds(endValue) <= timeToSeconds(startValue)) {
+    endOk = false;
+  }
+  clipStart.classList.toggle("invalid", !startOk);
+  clipEnd.classList.toggle("invalid", !endOk);
+}
+
+function setupTimeInput(field) {
+  if (!field) return;
+  field.setAttribute("inputmode", "numeric");
+  field.setAttribute("maxlength", "8");
+  field.setAttribute("autocomplete", "off");
+  field.addEventListener("input", (event) => {
+    // Beim Loeschen nicht neu formatieren, sonst kehrt ein entfernter
+    // Doppelpunkt sofort zurueck.
+    if (event.inputType && event.inputType.startsWith("delete")) return;
+    const caret = field.selectionStart ?? field.value.length;
+    const digitsBefore = field.value.slice(0, caret).replace(/\D/g, "").length;
+    const formatted = formatTimeTyping(field.value);
+    if (formatted === field.value) return;
+    field.value = formatted;
+    // Cursor hinter dieselbe Anzahl Ziffern setzen.
+    let pos = 0;
+    let seen = 0;
+    while (pos < formatted.length && seen < digitsBefore) {
+      if (/\d/.test(formatted[pos])) seen += 1;
+      pos += 1;
+    }
+    if (formatted[pos] === ":" && seen === digitsBefore && pos === formatted.length - 1) pos += 1;
+    field.setSelectionRange(pos, pos);
+  });
+  field.addEventListener("blur", () => {
+    field.value = normalizeTime(field.value);
+    validateClipFields();
+  });
+  field.addEventListener("focus", () => field.classList.remove("invalid"));
+}
+
+setupTimeInput(clipStart);
+setupTimeInput(clipEnd);
 
 function updateClipVisibility() {
   const isClip = getMode() === "clip";
@@ -701,10 +790,17 @@ async function start() {
 
   if (mode === "clip") {
     const startedAt = Date.now();
-    const start = clipStart.value.trim();
-    const end = clipEnd.value.trim();
+    clipStart.value = normalizeTime(clipStart.value);
+    clipEnd.value = normalizeTime(clipEnd.value);
+    validateClipFields();
+    const start = clipStart.value;
+    const end = clipEnd.value;
     if (!start || !end || !isTime(start) || !isTime(end)) {
       setStatusT("status.needClipTimes");
+      return;
+    }
+    if (timeToSeconds(end) <= timeToSeconds(start)) {
+      setStatusT("status.clipEndBeforeStart");
       return;
     }
     const clipMode = getClipMode();

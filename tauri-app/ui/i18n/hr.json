@@ -87,6 +87,7 @@
     "join": "Spajanje videozapisa ...",
     "compress": "Komprimiranje videa na najviše {mb} MB ...",
     "needClipTimes": "Unesite početak/kraj u formatu HH:MM:SS.",
+    "clipEndBeforeStart": "Kraj mora biti nakon početka.",
     "clipRemove": "Uklanjanje isječka ...",
     "clipCut": "Izrezivanje isječka ...",
     "converting": "Pretvorba u tijeku ...",

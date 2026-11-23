@@ -87,6 +87,7 @@
     "join": "Łączenie filmów ...",
     "compress": "Kompresja wideo do maks. {mb} MB ...",
     "needClipTimes": "Podaj początek/koniec w formacie HH:MM:SS.",
+    "clipEndBeforeStart": "Koniec musi być po początku.",
     "clipRemove": "Usuwanie fragmentu ...",
     "clipCut": "Wycinanie fragmentu ...",
     "converting": "Trwa konwersja ...",

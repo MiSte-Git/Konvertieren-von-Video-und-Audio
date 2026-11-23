@@ -403,3 +403,8 @@ body.is-running .progress {
     left: 100%;
   }
 }
+
+input.invalid {
+  border-color: #c0392b;
+  box-shadow: 0 0 0 2px rgba(192, 57, 43, 0.15);
+}
