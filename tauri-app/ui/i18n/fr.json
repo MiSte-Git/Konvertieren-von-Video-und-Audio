@@ -116,6 +116,20 @@
     "uses": "Utilise",
     "close": "Fermer"
   },
+  "update": {
+    "title": "Mise à jour disponible",
+    "available": "La version {version} est disponible (installée : {current}). Télécharger et installer maintenant ? L’application redémarrera ensuite.",
+    "availableShort": "La version {version} est disponible.",
+    "install": "Installer",
+    "later": "Plus tard",
+    "check": "Rechercher des mises à jour",
+    "checking": "Recherche de mises à jour …",
+    "upToDate": "L’application est à jour.",
+    "downloading": "Téléchargement de la mise à jour … {percent} %",
+    "downloadingUnknown": "Téléchargement de la mise à jour …",
+    "installing": "Installation de la mise à jour, l’application va redémarrer …",
+    "busy": "Veuillez attendre la fin du traitement en cours."
+  },
   "errors": {
     "log_path_unavailable": "Impossible de déterminer le chemin du journal.",
     "output_dir_create": "Impossible de créer le dossier de sortie",
@@ -149,7 +163,9 @@
     "path_unreadable": "Impossible de lire le chemin ({path})",
     "temp_list_create": "Impossible de créer la liste temporaire de fichiers",
     "time_format_invalid": "Format d'heure invalide. Veuillez utiliser HH:MM:SS.",
-    "task_failed": "Erreur interne de traitement"
+    "task_failed": "Erreur interne de traitement",
+    "update_failed": "Échec de la mise à jour",
+    "update_none": "Aucune mise à jour disponible."
   },
   "suffix": {
     "clip": "extrait",

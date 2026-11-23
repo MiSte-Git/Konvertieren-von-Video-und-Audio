@@ -143,6 +143,14 @@ header p {
 
 .about-actions {
   margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#updateInfo:empty {
+  display: none;
 }
 
 .card {

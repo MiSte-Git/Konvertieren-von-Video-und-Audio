@@ -51,5 +51,16 @@
       "signingIdentity": "-",
       "minimumSystemVersion": "10.15"
     }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJENjNEQUYyQzZDQTc4NDYKUldSR2VNckc4dHBqdmNwNW5xcTJYVGExdTJaK1pCajlNd3lTZ2NWRTJGdEl6YStHTkw4N1BoNm4K",
+      "endpoints": [
+        "https://github.com/MiSte-Git/Konvertieren-von-Video-und-Audio/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

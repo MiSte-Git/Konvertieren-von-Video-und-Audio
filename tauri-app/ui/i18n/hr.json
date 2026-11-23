@@ -116,6 +116,20 @@
     "uses": "Koristi",
     "close": "Zatvori"
   },
+  "update": {
+    "title": "Dostupno ažuriranje",
+    "available": "Dostupna je verzija {version} (instalirana: {current}). Preuzeti i instalirati sada? Aplikacija će se zatim ponovno pokrenuti.",
+    "availableShort": "Dostupna je verzija {version}.",
+    "install": "Instaliraj",
+    "later": "Kasnije",
+    "check": "Provjeri ažuriranja",
+    "checking": "Provjera ažuriranja …",
+    "upToDate": "Aplikacija je ažurna.",
+    "downloading": "Preuzimanje ažuriranja … {percent} %",
+    "downloadingUnknown": "Preuzimanje ažuriranja …",
+    "installing": "Instaliranje ažuriranja, aplikacija će se ponovno pokrenuti …",
+    "busy": "Pričekajte da trenutna obrada završi."
+  },
   "errors": {
     "log_path_unavailable": "Nije moguće odrediti putanju zapisnika.",
     "output_dir_create": "Nije moguće stvoriti odredišnu mapu",
@@ -149,7 +163,9 @@
     "path_unreadable": "Nije moguće pročitati putanju ({path})",
     "temp_list_create": "Nije moguće stvoriti privremeni popis datoteka",
     "time_format_invalid": "Neispravan format vremena. Koristite HH:MM:SS.",
-    "task_failed": "Interna pogreška obrade"
+    "task_failed": "Interna pogreška obrade",
+    "update_failed": "Ažuriranje nije uspjelo",
+    "update_none": "Nema dostupnih ažuriranja."
   },
   "suffix": {
     "clip": "isjecak",

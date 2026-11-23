@@ -116,6 +116,20 @@
     "uses": "Uses",
     "close": "Close"
   },
+  "update": {
+    "title": "Update available",
+    "available": "Version {version} is available (installed: {current}). Download and install now? The app will restart afterwards.",
+    "availableShort": "Version {version} is available.",
+    "install": "Install",
+    "later": "Later",
+    "check": "Check for updates",
+    "checking": "Checking for updates …",
+    "upToDate": "The app is up to date.",
+    "downloading": "Downloading update … {percent} %",
+    "downloadingUnknown": "Downloading update …",
+    "installing": "Installing update, the app will restart …",
+    "busy": "Please wait until the current job has finished."
+  },
   "errors": {
     "log_path_unavailable": "Could not determine the log path.",
     "output_dir_create": "Could not create the output folder",
@@ -149,7 +163,9 @@
     "path_unreadable": "Could not read path ({path})",
     "temp_list_create": "Could not create the temporary file list",
     "time_format_invalid": "Invalid time format. Please use HH:MM:SS.",
-    "task_failed": "Internal processing error"
+    "task_failed": "Internal processing error",
+    "update_failed": "Update failed",
+    "update_none": "No update available."
   },
   "suffix": {
     "clip": "clip",

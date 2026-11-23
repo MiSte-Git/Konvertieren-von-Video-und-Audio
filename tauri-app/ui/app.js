@@ -1078,7 +1078,87 @@ function refreshDynamicTexts() {
   renderJoinOrder();
   refreshAutoOutput();
   if (appVersionEl) renderVersion();
+  if (updateInfoEl && updateInfoRenderer) updateInfoEl.textContent = updateInfoRenderer();
 }
+
+// ---------- Updates (Tauri-Updater, latest.json im GitHub-Release) ----------
+const checkUpdateBtn = document.getElementById("checkUpdateBtn");
+const updateInfoEl = document.getElementById("updateInfo");
+let updateBusy = false;
+let updateInfoRenderer = null;
+
+function setUpdateInfo(renderer) {
+  updateInfoRenderer = renderer;
+  if (updateInfoEl) updateInfoEl.textContent = renderer ? renderer() : "";
+}
+
+async function checkForUpdate({ silent = false } = {}) {
+  if (!invoke || updateBusy) return;
+  updateBusy = true;
+  if (checkUpdateBtn) checkUpdateBtn.disabled = true;
+  try {
+    if (!silent) setUpdateInfo(() => t("update.checking"));
+    let update = null;
+    try {
+      update = await invoke("check_update");
+    } catch (err) {
+      // Beim automatischen Check (z.B. offline) still bleiben.
+      if (!silent) setUpdateInfo(() => translateError(err));
+      return;
+    }
+    if (!update) {
+      if (!silent) setUpdateInfo(() => t("update.upToDate"));
+      return;
+    }
+    const { version, currentVersion } = update;
+    setUpdateInfo(() => t("update.availableShort", { version }));
+    const message = t("update.available", { version, current: currentVersion || appVersion || "?" });
+    const ok = dialog?.ask
+      ? await dialog.ask(message, {
+          title: t("update.title"),
+          kind: "info",
+          okLabel: t("update.install"),
+          cancelLabel: t("update.later"),
+        })
+      : window.confirm(message);
+    if (ok) await installUpdate();
+  } finally {
+    updateBusy = false;
+    if (checkUpdateBtn) checkUpdateBtn.disabled = false;
+  }
+}
+
+async function installUpdate() {
+  if (document.body.classList.contains("is-running")) {
+    setUpdateInfo(() => t("update.busy"));
+    return;
+  }
+  if (aboutDialog?.open) aboutDialog.close();
+  setRunning(true);
+  startBtn.disabled = true;
+  setStatusT("update.downloadingUnknown");
+  try {
+    // Bei Erfolg startet die App neu, der Aufruf kehrt dann nicht zurueck.
+    await invoke("install_update");
+  } catch (err) {
+    setRunning(false);
+    startBtn.disabled = false;
+    setStatusError(err);
+  }
+}
+
+listenEvent("update_progress", (event) => {
+  const { downloaded = 0, total = null } = event?.payload || {};
+  if (total && downloaded >= total) {
+    setStatusT("update.installing");
+  } else if (total) {
+    setStatusT("update.downloading", { percent: Math.floor((downloaded * 100) / total) });
+  } else {
+    setStatusT("update.downloadingUnknown");
+  }
+});
+
+checkUpdateBtn?.addEventListener("click", () => checkForUpdate({ silent: false }));
 
 aboutBtn?.addEventListener("click", () => {
   if (aboutDialog?.showModal) aboutDialog.showModal();
@@ -1088,4 +1168,6 @@ renderLanguageBar();
 setLanguage(initialLanguage(), { persist: false }).then(() => {
   if (!document.body.classList.contains("is-running")) setStatusT("status.ready");
   loadVersionInfo();
+  // Automatisch einmal kurz nach dem Start nach Updates suchen.
+  setTimeout(() => checkForUpdate({ silent: true }), 3000);
 });

@@ -116,6 +116,20 @@
     "uses": "Używa",
     "close": "Zamknij"
   },
+  "update": {
+    "title": "Dostępna aktualizacja",
+    "available": "Dostępna jest wersja {version} (zainstalowana: {current}). Pobrać i zainstalować teraz? Aplikacja zostanie potem uruchomiona ponownie.",
+    "availableShort": "Dostępna jest wersja {version}.",
+    "install": "Zainstaluj",
+    "later": "Później",
+    "check": "Sprawdź aktualizacje",
+    "checking": "Sprawdzanie aktualizacji …",
+    "upToDate": "Aplikacja jest aktualna.",
+    "downloading": "Pobieranie aktualizacji … {percent} %",
+    "downloadingUnknown": "Pobieranie aktualizacji …",
+    "installing": "Instalowanie aktualizacji, aplikacja uruchomi się ponownie …",
+    "busy": "Poczekaj na zakończenie bieżącego przetwarzania."
+  },
   "errors": {
     "log_path_unavailable": "Nie można ustalić ścieżki logu.",
     "output_dir_create": "Nie można utworzyć folderu docelowego",
@@ -149,7 +163,9 @@
     "path_unreadable": "Nie można odczytać ścieżki ({path})",
     "temp_list_create": "Nie można utworzyć tymczasowej listy plików",
     "time_format_invalid": "Nieprawidłowy format czasu. Użyj HH:MM:SS.",
-    "task_failed": "Wewnętrzny błąd przetwarzania"
+    "task_failed": "Wewnętrzny błąd przetwarzania",
+    "update_failed": "Aktualizacja nie powiodła się",
+    "update_none": "Brak dostępnych aktualizacji."
   },
   "suffix": {
     "clip": "fragment",

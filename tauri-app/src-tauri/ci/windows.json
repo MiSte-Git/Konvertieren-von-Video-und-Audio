@@ -2,6 +2,7 @@
   "bundle": {
     "resources": {
       "../../bin/windows/": "bin/windows/"
-    }
+    },
+    "createUpdaterArtifacts": true
   }
 }

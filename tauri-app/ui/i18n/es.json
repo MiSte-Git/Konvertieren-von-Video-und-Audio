@@ -116,6 +116,20 @@
     "uses": "Utiliza",
     "close": "Cerrar"
   },
+  "update": {
+    "title": "Actualización disponible",
+    "available": "La versión {version} está disponible (instalada: {current}). ¿Descargar e instalar ahora? La aplicación se reiniciará después.",
+    "availableShort": "La versión {version} está disponible.",
+    "install": "Instalar",
+    "later": "Más tarde",
+    "check": "Buscar actualizaciones",
+    "checking": "Buscando actualizaciones …",
+    "upToDate": "La aplicación está actualizada.",
+    "downloading": "Descargando actualización … {percent} %",
+    "downloadingUnknown": "Descargando actualización …",
+    "installing": "Instalando actualización, la aplicación se reiniciará …",
+    "busy": "Espera a que termine el proceso actual."
+  },
   "errors": {
     "log_path_unavailable": "No se pudo determinar la ruta del registro.",
     "output_dir_create": "No se pudo crear la carpeta de destino",
@@ -149,7 +163,9 @@
     "path_unreadable": "No se pudo leer la ruta ({path})",
     "temp_list_create": "No se pudo crear la lista temporal de archivos",
     "time_format_invalid": "Formato de hora no válido. Usa HH:MM:SS.",
-    "task_failed": "Error interno de procesamiento"
+    "task_failed": "Error interno de procesamiento",
+    "update_failed": "Error en la actualización",
+    "update_none": "No hay actualizaciones disponibles."
   },
   "suffix": {
     "clip": "fragmento",

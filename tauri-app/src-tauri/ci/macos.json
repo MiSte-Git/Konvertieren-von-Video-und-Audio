@@ -2,6 +2,7 @@
   "bundle": {
     "resources": {
       "../../bin/darwin/": "bin/darwin/"
-    }
+    },
+    "createUpdaterArtifacts": true
   }
 }

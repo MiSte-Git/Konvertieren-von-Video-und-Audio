@@ -116,6 +116,20 @@
     "uses": "Verwendet",
     "close": "Schließen"
   },
+  "update": {
+    "title": "Update verfügbar",
+    "available": "Version {version} ist verfügbar (installiert: {current}). Jetzt herunterladen und installieren? Die App startet danach neu.",
+    "availableShort": "Version {version} ist verfügbar.",
+    "install": "Installieren",
+    "later": "Später",
+    "check": "Nach Updates suchen",
+    "checking": "Suche nach Updates …",
+    "upToDate": "Die App ist aktuell.",
+    "downloading": "Update wird geladen … {percent} %",
+    "downloadingUnknown": "Update wird geladen …",
+    "installing": "Update wird installiert, die App startet neu …",
+    "busy": "Bitte warten, bis die laufende Verarbeitung fertig ist."
+  },
   "errors": {
     "log_path_unavailable": "Log-Pfad konnte nicht bestimmt werden.",
     "output_dir_create": "Ausgabeordner kann nicht erstellt werden",
@@ -149,7 +163,9 @@
     "path_unreadable": "Pfad konnte nicht gelesen werden ({path})",
     "temp_list_create": "Temporäre Dateiliste konnte nicht erstellt werden",
     "time_format_invalid": "Zeitformat ungültig. Bitte HH:MM:SS verwenden.",
-    "task_failed": "Interner Fehler bei der Verarbeitung"
+    "task_failed": "Interner Fehler bei der Verarbeitung",
+    "update_failed": "Update fehlgeschlagen",
+    "update_none": "Kein Update verfügbar."
   },
   "suffix": {
     "clip": "ausschnitt",

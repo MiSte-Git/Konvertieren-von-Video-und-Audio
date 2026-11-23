@@ -116,6 +116,20 @@
     "uses": "Gebruikt",
     "close": "Sluiten"
   },
+  "update": {
+    "title": "Update beschikbaar",
+    "available": "Versie {version} is beschikbaar (geïnstalleerd: {current}). Nu downloaden en installeren? De app start daarna opnieuw.",
+    "availableShort": "Versie {version} is beschikbaar.",
+    "install": "Installeren",
+    "later": "Later",
+    "check": "Controleren op updates",
+    "checking": "Zoeken naar updates …",
+    "upToDate": "De app is up-to-date.",
+    "downloading": "Update downloaden … {percent} %",
+    "downloadingUnknown": "Update downloaden …",
+    "installing": "Update installeren, de app start opnieuw …",
+    "busy": "Wacht tot de huidige verwerking klaar is."
+  },
   "errors": {
     "log_path_unavailable": "Logpad kon niet worden bepaald.",
     "output_dir_create": "Uitvoermap kan niet worden aangemaakt",
@@ -149,7 +163,9 @@
     "path_unreadable": "Pad kon niet worden gelezen ({path})",
     "temp_list_create": "Tijdelijke bestandslijst kon niet worden aangemaakt",
     "time_format_invalid": "Ongeldige tijdnotatie. Gebruik HH:MM:SS.",
-    "task_failed": "Interne verwerkingsfout"
+    "task_failed": "Interne verwerkingsfout",
+    "update_failed": "Update mislukt",
+    "update_none": "Geen update beschikbaar."
   },
   "suffix": {
     "clip": "fragment",

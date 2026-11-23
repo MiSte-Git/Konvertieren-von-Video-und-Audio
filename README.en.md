@@ -107,6 +107,19 @@ Build only, without a release: *Actions* > *Release* > *Run workflow*. The insta
 
 The workflow downloads ffmpeg/ffprobe (Windows: BtbN builds, macOS: ffmpeg.martin-riedl.de) and lame (Windows: MSYS2, macOS: built from source) into `bin/windows/` or `bin/darwin/` and bundles them into the app. On start the app looks for these programs in the resource folder `bin/<os>/` and otherwise in the `PATH`.
 
+## Automatic updates
+The app checks for a new version shortly after start (not in dev mode), manually via *About* > *Check for updates*. It uses `latest.json` from the newest published (non pre-release) GitHub release. Updates are signed.
+
+One-time setup:
+```bash
+cargo tauri signer generate -w ~/.tauri/konvertierung.key
+```
+- Put the public key (`~/.tauri/konvertierung.key.pub`) into `tauri-app/src-tauri/tauri.conf.json` under `plugins.updater.pubkey`.
+- Store the content of `~/.tauri/konvertierung.key` as secret `TAURI_SIGNING_PRIVATE_KEY` and the password as `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` in the repo (Settings > Secrets and variables > Actions).
+- Keep the private key safe: without it no further updates can be shipped.
+
+The updater files (`.sig`, `latest.json`) are only created in CI (`createUpdaterArtifacts` in `src-tauri/ci/*.json`); a local `cargo tauri build` needs no key. An update is only offered once the release draft has been published.
+
 ## Building locally
 
 Requirements (per platform):

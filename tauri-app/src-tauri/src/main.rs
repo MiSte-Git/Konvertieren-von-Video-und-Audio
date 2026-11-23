@@ -12,6 +12,7 @@ use serde::Serialize;
 use std::sync::{Arc, Mutex};
 use tauri::image::Image;
 use tauri::{AppHandle, Emitter, Manager, State};
+use tauri_plugin_updater::UpdaterExt;
 
 struct AppState {
     current_pid: Arc<Mutex<Option<u32>>>,
@@ -1271,6 +1272,59 @@ fn set_app_user_model_id() {
     }
 }
 
+// Sucht auf GitHub nach einer neueren Version (latest.json im letzten Release).
+// Im Dev-Modus wird nie ein Update gemeldet.
+#[tauri::command]
+async fn check_update(app: AppHandle) -> Result<Option<serde_json::Value>, String> {
+    if cfg!(debug_assertions) {
+        return Ok(None);
+    }
+    let updater = app
+        .updater()
+        .map_err(|e| app_err_with("update_failed", &[("detail", e.to_string())]))?;
+    let update = updater
+        .check()
+        .await
+        .map_err(|e| app_err_with("update_failed", &[("detail", e.to_string())]))?;
+    Ok(update.map(|u| {
+        serde_json::json!({
+            "version": u.version,
+            "currentVersion": u.current_version,
+            "notes": u.body,
+        })
+    }))
+}
+
+// Laedt das Update, prueft die Signatur, installiert und startet neu.
+// Fortschritt per Event update_progress {downloaded, total}.
+#[tauri::command]
+async fn install_update(app: AppHandle) -> Result<(), String> {
+    let to_err = |e: tauri_plugin_updater::Error| app_err_with("update_failed", &[("detail", e.to_string())]);
+    let update = app
+        .updater()
+        .map_err(to_err)?
+        .check()
+        .await
+        .map_err(to_err)?
+        .ok_or_else(|| app_err("update_none"))?;
+    let progress_app = app.clone();
+    let mut downloaded: u64 = 0;
+    update
+        .download_and_install(
+            move |chunk, total| {
+                downloaded += chunk as u64;
+                let _ = progress_app.emit(
+                    "update_progress",
+                    serde_json::json!({ "downloaded": downloaded, "total": total }),
+                );
+            },
+            || {},
+        )
+        .await
+        .map_err(to_err)?;
+    app.restart();
+}
+
 fn main() {
     // Vor dem Erzeugen des ersten Fensters setzen.
     #[cfg(target_os = "windows")]
@@ -1278,6 +1332,7 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(AppState {
             current_pid: Arc::new(Mutex::new(None)),
             progress: Arc::new(Mutex::new(None)),
@@ -1301,7 +1356,9 @@ fn main() {
             cancel_current,
             get_progress,
             get_media_duration,
-            get_log_path
+            get_log_path,
+            check_update,
+            install_update
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -116,6 +116,20 @@
     "uses": "Utilizza",
     "close": "Chiudi"
   },
+  "update": {
+    "title": "Aggiornamento disponibile",
+    "available": "È disponibile la versione {version} (installata: {current}). Scaricare e installare ora? L’app verrà riavviata.",
+    "availableShort": "È disponibile la versione {version}.",
+    "install": "Installa",
+    "later": "Più tardi",
+    "check": "Cerca aggiornamenti",
+    "checking": "Ricerca aggiornamenti …",
+    "upToDate": "L’app è aggiornata.",
+    "downloading": "Download dell’aggiornamento … {percent} %",
+    "downloadingUnknown": "Download dell’aggiornamento …",
+    "installing": "Installazione dell’aggiornamento, l’app verrà riavviata …",
+    "busy": "Attendi il termine dell’elaborazione in corso."
+  },
   "errors": {
     "log_path_unavailable": "Impossibile determinare il percorso del log.",
     "output_dir_create": "Impossibile creare la cartella di destinazione",
@@ -149,7 +163,9 @@
     "path_unreadable": "Impossibile leggere il percorso ({path})",
     "temp_list_create": "Impossibile creare l'elenco temporaneo dei file",
     "time_format_invalid": "Formato orario non valido. Usa HH:MM:SS.",
-    "task_failed": "Errore interno di elaborazione"
+    "task_failed": "Errore interno di elaborazione",
+    "update_failed": "Aggiornamento non riuscito",
+    "update_none": "Nessun aggiornamento disponibile."
   },
   "suffix": {
     "clip": "spezzone",

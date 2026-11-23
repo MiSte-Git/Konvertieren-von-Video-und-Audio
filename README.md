@@ -107,6 +107,19 @@ Nur bauen ohne Release: *Actions* > *Release* > *Run workflow*. Die Installer li
 
 Der Workflow lädt ffmpeg/ffprobe (Windows: BtbN-Builds, macOS: ffmpeg.martin-riedl.de) und lame (Windows: MSYS2, macOS: aus den Quellen gebaut) nach `bin/windows/` bzw. `bin/darwin/` und bündelt sie in die App. Die App sucht diese Programme beim Start im Ressourcen-Ordner `bin/<os>/` und sonst im `PATH`.
 
+## Automatische Updates
+Die App sucht kurz nach dem Start nach einer neuen Version (im Dev-Modus nicht), manuell unter *Über* > *Nach Updates suchen*. Grundlage ist `latest.json` im neuesten veröffentlichten (nicht Pre-release) GitHub-Release. Updates sind signiert.
+
+Einmalig einrichten:
+```bash
+cargo tauri signer generate -w ~/.tauri/konvertierung.key
+```
+- Öffentlichen Schlüssel (`~/.tauri/konvertierung.key.pub`) in `tauri-app/src-tauri/tauri.conf.json` unter `plugins.updater.pubkey` eintragen.
+- Inhalt von `~/.tauri/konvertierung.key` als Secret `TAURI_SIGNING_PRIVATE_KEY`, das Passwort als `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` im Repo hinterlegen (Settings > Secrets and variables > Actions).
+- Den privaten Schlüssel sicher aufbewahren: ohne ihn können keine Updates mehr ausgeliefert werden.
+
+Die Updater-Dateien (`.sig`, `latest.json`) entstehen nur im CI (`createUpdaterArtifacts` in `src-tauri/ci/*.json`), lokales `cargo tauri build` braucht keinen Schlüssel. Ein Update wird erst angeboten, wenn der Release-Entwurf veröffentlicht ist.
+
 ## Lokal bauen
 
 Voraussetzungen (pro Plattform):

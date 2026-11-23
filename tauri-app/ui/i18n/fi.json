@@ -116,6 +116,20 @@
     "uses": "Käyttää",
     "close": "Sulje"
   },
+  "update": {
+    "title": "Päivitys saatavilla",
+    "available": "Versio {version} on saatavilla (asennettu: {current}). Ladataanko ja asennetaanko nyt? Sovellus käynnistyy sen jälkeen uudelleen.",
+    "availableShort": "Versio {version} on saatavilla.",
+    "install": "Asenna",
+    "later": "Myöhemmin",
+    "check": "Tarkista päivitykset",
+    "checking": "Etsitään päivityksiä …",
+    "upToDate": "Sovellus on ajan tasalla.",
+    "downloading": "Ladataan päivitystä … {percent} %",
+    "downloadingUnknown": "Ladataan päivitystä …",
+    "installing": "Asennetaan päivitystä, sovellus käynnistyy uudelleen …",
+    "busy": "Odota, kunnes käynnissä oleva käsittely on valmis."
+  },
   "errors": {
     "log_path_unavailable": "Lokin polkua ei voitu määrittää.",
     "output_dir_create": "Kohdekansiota ei voitu luoda",
@@ -149,7 +163,9 @@
     "path_unreadable": "Polkua ei voitu lukea ({path})",
     "temp_list_create": "Väliaikaista tiedostoluetteloa ei voitu luoda",
     "time_format_invalid": "Virheellinen aikamuoto. Käytä muotoa HH:MM:SS.",
-    "task_failed": "Sisäinen käsittelyvirhe"
+    "task_failed": "Sisäinen käsittelyvirhe",
+    "update_failed": "Päivitys epäonnistui",
+    "update_none": "Päivityksiä ei ole saatavilla."
   },
   "suffix": {
     "clip": "leike",
