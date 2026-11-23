@@ -1087,6 +1087,37 @@ const updateInfoEl = document.getElementById("updateInfo");
 let updateBusy = false;
 let updateInfoRenderer = null;
 
+// Eigener Dialog statt dialog.ask/window.confirm: window.confirm blockiert in
+// der WebView nicht zuverlaessig und kennt keine eigenen Button-Texte.
+const updateDialog = document.getElementById("updateDialog");
+const updateMessageEl = document.getElementById("updateMessage");
+const updateInstallBtn = document.getElementById("updateInstallBtn");
+const updateLaterBtn = document.getElementById("updateLaterBtn");
+
+function askInstallUpdate(message) {
+  return new Promise((resolve) => {
+    if (!updateDialog?.showModal) {
+      resolve(false);
+      return;
+    }
+    if (aboutDialog?.open) aboutDialog.close();
+    updateMessageEl.textContent = message;
+    const finish = (result) => {
+      updateInstallBtn.removeEventListener("click", onInstall);
+      updateLaterBtn.removeEventListener("click", onLater);
+      updateDialog.removeEventListener("cancel", onLater);
+      if (updateDialog.open) updateDialog.close();
+      resolve(result);
+    };
+    const onInstall = () => finish(true);
+    const onLater = () => finish(false);
+    updateInstallBtn.addEventListener("click", onInstall);
+    updateLaterBtn.addEventListener("click", onLater);
+    updateDialog.addEventListener("cancel", onLater);
+    updateDialog.showModal();
+  });
+}
+
 function setUpdateInfo(renderer) {
   updateInfoRenderer = renderer;
   if (updateInfoEl) updateInfoEl.textContent = renderer ? renderer() : "";
@@ -1113,15 +1144,7 @@ async function checkForUpdate({ silent = false } = {}) {
     const { version, currentVersion } = update;
     setUpdateInfo(() => t("update.availableShort", { version }));
     const message = t("update.available", { version, current: currentVersion || appVersion || "?" });
-    const ok = dialog?.ask
-      ? await dialog.ask(message, {
-          title: t("update.title"),
-          kind: "info",
-          okLabel: t("update.install"),
-          cancelLabel: t("update.later"),
-        })
-      : window.confirm(message);
-    if (ok) await installUpdate();
+    if (await askInstallUpdate(message)) await installUpdate();
   } finally {
     updateBusy = false;
     if (checkUpdateBtn) checkUpdateBtn.disabled = false;
