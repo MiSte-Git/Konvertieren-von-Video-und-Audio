@@ -155,6 +155,9 @@
     "clipRemoved": "without_clip",
     "compressed": "compressed",
     "joined": "joined",
-    "audioAdjusted": "audio_adjusted"
+    "audioAdjusted": "audio_adjusted",
+    "audioNormalize": "normalized",
+    "audioSpeech": "speech_leveled",
+    "audioStrong": "strongly_leveled"
   }
 }

@@ -323,7 +323,24 @@ const SUFFIX_FALLBACK = {
   compressed: "komprimiert",
   joined: "zusammengefuegt",
   audioAdjusted: "audio_angepasst",
+  audioNormalize: "normalisiert",
+  audioSpeech: "sprache_ausgeglichen",
+  audioStrong: "stark_ausgeglichen",
 };
+
+const AUDIO_SUFFIX_KEYS = {
+  normalize: "audioNormalize",
+  speech: "audioSpeech",
+  strong: "audioStrong",
+};
+
+// Endung fuer die gewaehlte Lautstaerkeanpassung, leer bei "Keine"
+// oder wenn der Modus keine Anpassung unterstuetzt.
+function audioSuffix(mode) {
+  if (!supportsAudioAdjustment(mode)) return "";
+  const key = AUDIO_SUFFIX_KEYS[getAudioAdjustment()];
+  return key ? `_${fileSuffix(key)}` : "";
+}
 
 function fileSuffix(key) {
   const cleaned = t(`suffix.${key}`)
@@ -353,11 +370,13 @@ function defaultOutput(input, mode, clipMode) {
   if (mode === "adjustvideoaudio") {
     const extensionIndex = base.lastIndexOf(".");
     const extension = extensionIndex > 0 ? base.slice(extensionIndex) : ".mp4";
-    const name = `${stem}_${fileSuffix("audioAdjusted")}${extension}`;
+    // Mit gewaehlter Anpassung ersetzt deren Endung das allgemeine audio_angepasst.
+    const adjusted = audioSuffix(mode) || `_${fileSuffix("audioAdjusted")}`;
+    const name = `${stem}${adjusted}${extension}`;
     return dir ? `${dir}${sep}${name}` : name;
   }
   const ext = mode === "divx" ? "_DivX.avi" : "_LAME.mp3";
-  const name = `${stem}${ext}`;
+  const name = `${stem}${audioSuffix(mode)}${ext}`;
   return dir ? `${dir}${sep}${name}` : name;
 }
 
@@ -837,6 +856,7 @@ outputPath.addEventListener("input", () => {
 audioAdjustment?.addEventListener("change", () => {
   updateAudioAdjustmentHelp();
   saveAudioAdjustment();
+  refreshAutoOutput();
 });
 compressAfterJoin?.addEventListener("change", updateVideoOptionsVisibility);
 

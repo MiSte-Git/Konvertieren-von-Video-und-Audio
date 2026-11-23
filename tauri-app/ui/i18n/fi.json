@@ -155,6 +155,9 @@
     "clipRemoved": "ilman_leiketta",
     "compressed": "pakattu",
     "joined": "yhdistetty",
-    "audioAdjusted": "aani_saadetty"
+    "audioAdjusted": "aani_saadetty",
+    "audioNormalize": "normalisoitu",
+    "audioSpeech": "puhe_tasattu",
+    "audioStrong": "voimakkaasti_tasattu"
   }
 }

@@ -155,6 +155,9 @@
     "clipRemoved": "без_фрагмента",
     "compressed": "сжато",
     "joined": "объединено",
-    "audioAdjusted": "звук_настроен"
+    "audioAdjusted": "звук_настроен",
+    "audioNormalize": "нормализовано",
+    "audioSpeech": "речь_выровнена",
+    "audioStrong": "сильно_выровнено"
   }
 }

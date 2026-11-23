@@ -155,6 +155,9 @@
     "clipRemoved": "zonder_fragment",
     "compressed": "gecomprimeerd",
     "joined": "samengevoegd",
-    "audioAdjusted": "audio_aangepast"
+    "audioAdjusted": "audio_aangepast",
+    "audioNormalize": "genormaliseerd",
+    "audioSpeech": "spraak_genivelleerd",
+    "audioStrong": "sterk_genivelleerd"
   }
 }
