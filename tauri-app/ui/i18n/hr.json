@@ -154,6 +154,7 @@
   "suffix": {
     "clip": "isjecak",
     "clipRemoved": "bez_isjecka",
+    "without": "bez",
     "compressed": "komprimirano",
     "joined": "spojeno",
     "audioAdjusted": "audio_prilagoden",

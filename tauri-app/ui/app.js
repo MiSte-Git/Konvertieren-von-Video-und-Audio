@@ -309,12 +309,6 @@ function stripExt(name) {
   return idx > 0 ? name.slice(0, idx) : name;
 }
 
-function tsSuffix() {
-  const d = new Date();
-  const pad = (v) => String(v).padStart(2, "0");
-  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
-}
-
 // Dateinamen-Endung in der aktuellen Sprache (suffix.<key> in ui/i18n/*.json).
 // Zeichen, die in Dateinamen nicht erlaubt sind, werden entfernt.
 const SUFFIX_FALLBACK = {
@@ -322,6 +316,7 @@ const SUFFIX_FALLBACK = {
   clipRemoved: "ohne_ausschnitt",
   compressed: "komprimiert",
   joined: "zusammengefuegt",
+  without: "ohne",
   audioAdjusted: "audio_angepasst",
   audioNormalize: "normalisiert",
   audioSpeech: "sprache_ausgeglichen",
@@ -355,8 +350,19 @@ function defaultOutput(input, mode, clipMode) {
   const { dir, base, sep } = splitPath(input);
   const stem = stripExt(base);
   if (mode === "clip") {
-    const suffix = fileSuffix(clipMode === "minus" ? "clipRemoved" : "clip");
-    const name = `${stem}_${suffix}_${tsSuffix()}.mp4`;
+    // Mit gueltigen Zeiten nur Start-Ende anhaengen (Doppelpunkte sind in
+    // Dateinamen nicht erlaubt): Name_01.39.59-02.03.07.mp4, beim Entfernen
+    // Name_ohne_01.39.59-02.03.07.mp4. Sonst die allgemeine Endung.
+    const startValue = normalizeTime(clipStart?.value || "");
+    const endValue = normalizeTime(clipEnd?.value || "");
+    let suffix;
+    if (isTime(startValue) && isTime(endValue)) {
+      const range = `${startValue.replace(/:/g, ".")}-${endValue.replace(/:/g, ".")}`;
+      suffix = clipMode === "minus" ? `${fileSuffix("without")}_${range}` : range;
+    } else {
+      suffix = fileSuffix(clipMode === "minus" ? "clipRemoved" : "clip");
+    }
+    const name = `${stem}_${suffix}.mp4`;
     return dir ? `${dir}${sep}${name}` : name;
   }
   if (mode === "targetsize") {
@@ -537,6 +543,7 @@ function setupTimeInput(field) {
   field.addEventListener("blur", () => {
     field.value = normalizeTime(field.value);
     validateClipFields();
+    refreshAutoOutput();
   });
   field.addEventListener("focus", () => field.classList.remove("invalid"));
 }

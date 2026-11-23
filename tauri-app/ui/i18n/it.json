@@ -154,6 +154,7 @@
   "suffix": {
     "clip": "spezzone",
     "clipRemoved": "senza_spezzone",
+    "without": "senza",
     "compressed": "compresso",
     "joined": "unito",
     "audioAdjusted": "audio_regolato",

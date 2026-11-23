@@ -154,6 +154,7 @@
   "suffix": {
     "clip": "clip",
     "clipRemoved": "without_clip",
+    "without": "without",
     "compressed": "compressed",
     "joined": "joined",
     "audioAdjusted": "audio_adjusted",

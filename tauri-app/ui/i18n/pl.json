@@ -154,6 +154,7 @@
   "suffix": {
     "clip": "fragment",
     "clipRemoved": "bez_fragmentu",
+    "without": "bez",
     "compressed": "skompresowany",
     "joined": "polaczony",
     "audioAdjusted": "audio_dostosowane",
