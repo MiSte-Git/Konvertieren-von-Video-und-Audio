@@ -1,5 +1,6 @@
 {
   "app": {
+    "title": "Audio-Video Converter",
     "about": "About",
     "version": "Version {version}",
     "versionUnknown": "Version unknown"

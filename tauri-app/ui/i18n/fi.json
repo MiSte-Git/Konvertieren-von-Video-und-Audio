@@ -1,5 +1,6 @@
 {
   "app": {
+    "title": "Ääni- ja videomuunnin",
     "about": "Tietoja",
     "version": "Versio {version}",
     "versionUnknown": "Versio tuntematon"

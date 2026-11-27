@@ -1,5 +1,6 @@
 {
   "app": {
+    "title": "Convertidor de audio y vídeo",
     "about": "Acerca de",
     "version": "Versión {version}",
     "versionUnknown": "Versión desconocida"

@@ -1,5 +1,6 @@
 {
   "app": {
+    "title": "Audio-video pretvarač",
     "about": "O programu",
     "version": "Verzija {version}",
     "versionUnknown": "Verzija nepoznata"

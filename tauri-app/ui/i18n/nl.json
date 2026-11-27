@@ -1,5 +1,6 @@
 {
   "app": {
+    "title": "Audio-videoconverter",
     "about": "Over",
     "version": "Versie {version}",
     "versionUnknown": "Versie onbekend"

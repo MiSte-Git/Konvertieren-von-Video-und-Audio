@@ -173,8 +173,22 @@ async function setLanguage(code, { persist = true } = {}) {
   document.documentElement.lang = code;
   if (persist) storageSet(LANGUAGE_STORAGE_KEY, code);
   applyTranslations();
+  updateWindowTitle();
   updateLanguageBar();
   refreshDynamicTexts();
+}
+
+// Fenstertitel (Titelleiste/Taskleiste) an die Sprache anpassen.
+// document.title wird von Tauri nicht automatisch ins native Fenster übernommen.
+async function updateWindowTitle() {
+  const title = t("app.title");
+  document.title = title;
+  if (!invoke) return;
+  try {
+    await invoke("plugin:window|set_title", { label: "main", value: title });
+  } catch (err) {
+    console.warn("Fenstertitel konnte nicht gesetzt werden:", err);
+  }
 }
 
 const inputPath = document.getElementById("inputPath");
