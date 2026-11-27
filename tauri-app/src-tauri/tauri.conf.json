@@ -50,6 +50,28 @@
     "macOS": {
       "signingIdentity": "-",
       "minimumSystemVersion": "10.15"
+    },
+    "windows": {
+      "nsis": {
+        "languages": [
+          "English",
+          "German",
+          "French",
+          "Italian",
+          "Russian",
+          "Polish",
+          "Spanish",
+          "Croatian",
+          "Dutch",
+          "Finnish"
+        ],
+        "displayLanguageSelector": true,
+        "customLanguageFiles": {
+          "Polish": "./nsis/languages/Polish.nsh",
+          "Croatian": "./nsis/languages/Croatian.nsh",
+          "Finnish": "./nsis/languages/Finnish.nsh"
+        }
+      }
     }
   },
   "plugins": {
