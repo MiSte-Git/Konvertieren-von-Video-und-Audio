@@ -194,8 +194,8 @@ fn get_audio_filter(mode: Option<&str>) -> Result<Option<&'static str>, String> 
 const RNNOISE_MODEL: &[u8] = include_bytes!("../resources/rnnoise/sh.rnnn");
 const RNNOISE_MODEL_FILE: &str = "sh.rnnn";
 
-// Hintergrundgeraeusche reduzieren. Hoch-/Tiefpass entfernt Brummen und Zischen
-// ausserhalb des Sprachbereichs.
+// Hintergrundgeraeusche reduzieren. Der Hochpass entfernt tiefes Brummen unter
+// dem Sprachbereich. Kein Tiefpass: der wuerde die Stimmen dumpf machen.
 // light:  FFT-Entrauschen, das Rauschprofil wird laufend nachgefuehrt (tn=1),
 //         damit ein Geraet, das an- und ausgeht, abgefangen wird.
 // strong: RNNoise, erkennt Sprache pro Frame und ist unabhaengig davon,
@@ -204,10 +204,10 @@ fn get_noise_filter(mode: Option<&str>) -> Result<Option<String>, String> {
     match mode.unwrap_or("none") {
         "none" => Ok(None),
         "light" => Ok(Some(
-            "highpass=f=80,lowpass=f=8000,afftdn=nr=12:nf=-40:tn=1".to_string(),
+            "highpass=f=80,afftdn=nr=10:nf=-50:tn=1".to_string(),
         )),
         "strong" => Ok(Some(format!(
-            "highpass=f=80,lowpass=f=8000,arnndn=m={}",
+            "highpass=f=80,arnndn=m={}",
             RNNOISE_MODEL_FILE
         ))),
         _ => Err(app_err("unknown_noise_reduction")),
