@@ -11,7 +11,7 @@ Dieses Repository enthält zwei Varianten:
 
 - Video zu MP3, Audio zu MP3, Video zu AVI (DivX), Video-Ausschnitt
 - Die Audiospur eines Videos mit den gewählten Lautstärkeoptionen anpassen, ohne das Video neu zu kodieren.
-- Hintergrundgeräusche wie Klimaanlage oder Lüfter reduzieren (Leicht: adaptive FFT-Rauschunterdrückung, Stark: KI-Filter RNNoise für Sprache). Kombinierbar mit der Lautstärkeanpassung, gilt für MP3-Modi und die Audiospur im Video.
+- Hintergrundgeräusche wie Klimaanlage oder Lüfter reduzieren per Schalter (KI-Filter RNNoise, halb mit dem Original gemischt, damit die Stimmen klar bleiben). Kombinierbar mit der Lautstärkeanpassung, gilt für MP3-Modi und die Audiospur im Video.
 - Videos per Zweipass-H.264-Kodierung auf eine frei wählbare Maximalgröße komprimieren (Standard: 100 MB).
 - Mehrere Videos in einer änderbaren Reihenfolge ohne Neukodierung zusammenfügen.
 - Das zusammengefügte Video optional anschließend auf die gewählte Maximalgröße komprimieren.

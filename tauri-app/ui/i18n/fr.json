@@ -34,16 +34,8 @@
       "strong": "Pour les enregistrements avec des voix très faibles et des passages soudainement très forts."
     },
     "noise": "Bruit de fond",
-    "noiseOption": {
-      "none": "Aucune réduction",
-      "light": "Réduire légèrement",
-      "strong": "Réduire fortement (voix)"
-    },
-    "noiseHelp": {
-      "none": "Le bruit de fond n'est pas modifié.",
-      "light": "Atténue les bruits constants comme la climatisation ou les ventilateurs. S'adapte lorsque l'appareil s'allume ou s'éteint.",
-      "strong": "Filtre IA qui ne laisse passer que les voix. Fonctionne aussi lorsque le bruit s'interrompt. La musique est également fortement atténuée."
-    }
+    "noiseOn": "Réduire",
+    "noiseHelp": "Atténue les bruits comme la climatisation ou les ventilateurs tout en gardant les voix claires. Pour des voix faibles, utilisez aussi le réglage du volume."
   },
   "join": {
     "title": "Ordre",
@@ -191,7 +183,6 @@
     "audioNormalize": "normalise",
     "audioSpeech": "voix_egalisee",
     "audioStrong": "fortement_egalise",
-    "noiseLight": "debruite_leger",
-    "noiseStrong": "debruite_fort"
+    "noise": "debruite"
   }
 }

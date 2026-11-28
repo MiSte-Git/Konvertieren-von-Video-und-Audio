@@ -34,16 +34,8 @@
       "strong": "Für Aufnahmen mit sehr leisen Stimmen und plötzlich sehr lauten Passagen."
     },
     "noise": "Hintergrundgeräusche",
-    "noiseOption": {
-      "none": "Keine Reduzierung",
-      "light": "Leicht reduzieren",
-      "strong": "Stark reduzieren (Sprache)"
-    },
-    "noiseHelp": {
-      "none": "Hintergrundgeräusche werden nicht verändert.",
-      "light": "Dämpft gleichmäßige Geräusche wie Klimaanlage oder Lüfter. Passt sich an, wenn das Gerät an- oder ausgeht.",
-      "strong": "KI-Filter, der nur Stimmen durchlässt. Wirkt auch, wenn das Störgeräusch zwischendurch aussetzt. Musik wird ebenfalls stark gedämpft."
-    }
+    "noiseOn": "Reduzieren",
+    "noiseHelp": "Dämpft Rauschen wie Klimaanlage oder Lüfter, die Stimmen bleiben klar. Für leise Stimmen zusätzlich die Lautstärkeanpassung nutzen."
   },
   "join": {
     "title": "Reihenfolge",
@@ -191,7 +183,6 @@
     "audioNormalize": "normalisiert",
     "audioSpeech": "sprache_ausgeglichen",
     "audioStrong": "stark_ausgeglichen",
-    "noiseLight": "entrauscht_leicht",
-    "noiseStrong": "entrauscht_stark"
+    "noise": "entrauscht"
   }
 }

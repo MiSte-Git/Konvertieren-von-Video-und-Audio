@@ -197,7 +197,6 @@ const audioOptionsSection = document.getElementById("audioOptionsSection");
 const audioAdjustment = document.getElementById("audioAdjustment");
 const audioAdjustmentHelp = document.getElementById("audioAdjustmentHelp");
 const noiseReduction = document.getElementById("noiseReduction");
-const noiseReductionHelp = document.getElementById("noiseReductionHelp");
 const clipSection = document.getElementById("clipSection");
 const clipStart = document.getElementById("clipStart");
 const clipEnd = document.getElementById("clipEnd");
@@ -268,7 +267,7 @@ function getAudioAdjustment() {
 }
 
 function getNoiseReduction() {
-  return noiseReduction?.value || "none";
+  return noiseReduction?.checked ? "on" : "none";
 }
 
 function supportsBatchMode(mode = getMode()) {
@@ -342,13 +341,11 @@ const SUFFIX_FALLBACK = {
   audioNormalize: "normalisiert",
   audioSpeech: "sprache_ausgeglichen",
   audioStrong: "stark_ausgeglichen",
-  noiseLight: "entrauscht_leicht",
-  noiseStrong: "entrauscht_stark",
+  noise: "entrauscht",
 };
 
 const NOISE_SUFFIX_KEYS = {
-  light: "noiseLight",
-  strong: "noiseStrong",
+  on: "noise",
 };
 
 const AUDIO_SUFFIX_KEYS = {
@@ -620,17 +617,9 @@ function saveAudioAdjustment() {
   localStorage.setItem(AUDIO_ADJUSTMENT_STORAGE_KEY, getAudioAdjustment());
 }
 
-function updateNoiseReductionHelp() {
-  if (!noiseReductionHelp) return;
-  noiseReductionHelp.textContent = t(`audio.noiseHelp.${getNoiseReduction()}`);
-}
-
 function loadNoiseReduction() {
   if (!noiseReduction) return;
-  const saved = localStorage.getItem(NOISE_REDUCTION_STORAGE_KEY) || "none";
-  const hasOption = Array.from(noiseReduction.options).some((option) => option.value === saved);
-  noiseReduction.value = hasOption ? saved : "none";
-  updateNoiseReductionHelp();
+  noiseReduction.checked = localStorage.getItem(NOISE_REDUCTION_STORAGE_KEY) === "on";
 }
 
 function saveNoiseReduction() {
@@ -1018,7 +1007,6 @@ audioAdjustment?.addEventListener("change", () => {
   refreshAutoOutput();
 });
 noiseReduction?.addEventListener("change", () => {
-  updateNoiseReductionHelp();
   saveNoiseReduction();
   refreshAutoOutput();
 });
@@ -1132,7 +1120,6 @@ function refreshAutoOutput() {
 function refreshDynamicTexts() {
   if (statusRenderer) statusEl.textContent = statusRenderer();
   updateAudioAdjustmentHelp();
-  updateNoiseReductionHelp();
   updateOutputControls();
   if (selectedInputs.length > 1) {
     inputPath.value = t("files.selectedCount", { count: selectedInputs.length });

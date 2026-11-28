@@ -34,16 +34,8 @@
       "strong": "Para grabaciones con voces muy bajas y pasajes repentinamente muy fuertes."
     },
     "noise": "Ruido de fondo",
-    "noiseOption": {
-      "none": "Sin reducción",
-      "light": "Reducir ligeramente",
-      "strong": "Reducir mucho (voz)"
-    },
-    "noiseHelp": {
-      "none": "El ruido de fondo no se modifica.",
-      "light": "Atenúa ruidos constantes como el aire acondicionado o ventiladores. Se adapta cuando el aparato se enciende o se apaga.",
-      "strong": "Filtro de IA que solo deja pasar las voces. También funciona cuando el ruido se interrumpe. La música también se atenúa mucho."
-    }
+    "noiseOn": "Reducir",
+    "noiseHelp": "Atenúa ruidos como el aire acondicionado o los ventiladores y mantiene las voces claras. Para voces bajas, usa también el ajuste de volumen."
   },
   "join": {
     "title": "Orden",
@@ -191,7 +183,6 @@
     "audioNormalize": "normalizado",
     "audioSpeech": "voz_nivelada",
     "audioStrong": "muy_nivelado",
-    "noiseLight": "sin_ruido_ligero",
-    "noiseStrong": "sin_ruido_fuerte"
+    "noise": "sin_ruido"
   }
 }

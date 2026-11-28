@@ -34,16 +34,8 @@
       "strong": "Do nagrań z bardzo cichymi głosami i nagłymi, bardzo głośnymi fragmentami."
     },
     "noise": "Szumy w tle",
-    "noiseOption": {
-      "none": "Bez redukcji",
-      "light": "Lekko zredukuj",
-      "strong": "Mocno zredukuj (mowa)"
-    },
-    "noiseHelp": {
-      "none": "Szumy w tle nie są zmieniane.",
-      "light": "Tłumi stałe szumy, np. klimatyzacji lub wentylatorów. Dostosowuje się, gdy urządzenie się włącza lub wyłącza.",
-      "strong": "Filtr AI przepuszczający tylko głosy. Działa także, gdy szum chwilowo ustaje. Muzyka również jest mocno tłumiona."
-    }
+    "noiseOn": "Redukuj",
+    "noiseHelp": "Tłumi szumy, np. klimatyzacji lub wentylatorów, zachowując wyraźne głosy. Przy cichych głosach użyj też regulacji głośności."
   },
   "join": {
     "title": "Kolejność",
@@ -191,7 +183,6 @@
     "audioNormalize": "znormalizowany",
     "audioSpeech": "mowa_wyrownana",
     "audioStrong": "silnie_wyrownany",
-    "noiseLight": "odszumione_lekko",
-    "noiseStrong": "odszumione_mocno"
+    "noise": "odszumione"
   }
 }

@@ -34,16 +34,8 @@
       "strong": "Za snimke s vrlo tihim glasovima i iznenadnim vrlo glasnim dijelovima."
     },
     "noise": "Pozadinska buka",
-    "noiseOption": {
-      "none": "Bez smanjenja",
-      "light": "Blago smanji",
-      "strong": "Jako smanji (govor)"
-    },
-    "noiseHelp": {
-      "none": "Pozadinska buka se ne mijenja.",
-      "light": "Prigušuje stalnu buku poput klima-uređaja ili ventilatora. Prilagođava se kada se uređaj uključi ili isključi.",
-      "strong": "AI filtar koji propušta samo glasove. Radi i kada buka povremeno prestane. Glazba se također jako prigušuje."
-    }
+    "noiseOn": "Smanji",
+    "noiseHelp": "Prigušuje buku poput klima-uređaja ili ventilatora, a glasovi ostaju jasni. Za tihe glasove koristite i prilagodbu glasnoće."
   },
   "join": {
     "title": "Redoslijed",
@@ -191,7 +183,6 @@
     "audioNormalize": "normalizirano",
     "audioSpeech": "govor_izjednacen",
     "audioStrong": "jako_izjednaceno",
-    "noiseLight": "bez_buke_blago",
-    "noiseStrong": "bez_buke_jako"
+    "noise": "bez_buke"
   }
 }

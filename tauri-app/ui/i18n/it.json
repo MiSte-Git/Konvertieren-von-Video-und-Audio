@@ -34,16 +34,8 @@
       "strong": "Per registrazioni con voci molto basse e passaggi improvvisamente molto forti."
     },
     "noise": "Rumore di fondo",
-    "noiseOption": {
-      "none": "Nessuna riduzione",
-      "light": "Riduci leggermente",
-      "strong": "Riduci molto (voce)"
-    },
-    "noiseHelp": {
-      "none": "Il rumore di fondo non viene modificato.",
-      "light": "Attenua rumori costanti come aria condizionata o ventole. Si adatta quando l'apparecchio si accende o si spegne.",
-      "strong": "Filtro IA che lascia passare solo le voci. Funziona anche quando il rumore si interrompe. Anche la musica viene molto attenuata."
-    }
+    "noiseOn": "Riduci",
+    "noiseHelp": "Attenua rumori come aria condizionata o ventole mantenendo le voci chiare. Per voci deboli usa anche la regolazione del volume."
   },
   "join": {
     "title": "Ordine",
@@ -191,7 +183,6 @@
     "audioNormalize": "normalizzato",
     "audioSpeech": "voce_bilanciata",
     "audioStrong": "fortemente_bilanciato",
-    "noiseLight": "denoise_leggero",
-    "noiseStrong": "denoise_forte"
+    "noise": "denoise"
   }
 }

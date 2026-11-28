@@ -194,20 +194,16 @@ fn get_audio_filter(mode: Option<&str>) -> Result<Option<&'static str>, String> 
 const RNNOISE_MODEL: &[u8] = include_bytes!("../resources/rnnoise/sh.rnnn");
 const RNNOISE_MODEL_FILE: &str = "sh.rnnn";
 
-// Hintergrundgeraeusche reduzieren. Der Hochpass entfernt tiefes Brummen unter
-// dem Sprachbereich. Kein Tiefpass: der wuerde die Stimmen dumpf machen.
-// light:  FFT-Entrauschen, das Rauschprofil wird laufend nachgefuehrt (tn=1),
-//         damit ein Geraet, das an- und ausgeht, abgefangen wird.
-// strong: RNNoise, erkennt Sprache pro Frame und ist unabhaengig davon,
-//         ob das Stoergeraeusch gerade laeuft.
+// Hintergrundgeraeusche reduzieren (ein Schalter, "on"/"none").
+// Hochpass gegen tiefes Brummen, dann RNNoise. mix=0.5 mischt das Ergebnis
+// halb mit dem Original: deutlich weniger Rauschen, die Stimmen bleiben klar.
+// Voll gefiltert (mix=1) klangen Stimmen blechern, FFT-Entrauschen (afftdn)
+// und ein Tiefpass machten sie dumpf.
 fn get_noise_filter(mode: Option<&str>) -> Result<Option<String>, String> {
     match mode.unwrap_or("none") {
         "none" => Ok(None),
-        "light" => Ok(Some(
-            "highpass=f=80,afftdn=nr=10:nf=-50:tn=1".to_string(),
-        )),
-        "strong" => Ok(Some(format!(
-            "highpass=f=80,arnndn=m={}",
+        "on" => Ok(Some(format!(
+            "highpass=f=80,arnndn=m={}:mix=0.5",
             RNNOISE_MODEL_FILE
         ))),
         _ => Err(app_err("unknown_noise_reduction")),
@@ -221,7 +217,7 @@ fn get_noise_filter(mode: Option<&str>) -> Result<Option<String>, String> {
 const NAN_GUARD_FILTER: &str = "aeval=exprs='if(lt(abs(val(ch)),1e6),val(ch),0)':c=same";
 
 fn needs_noise_model(noise_reduction: Option<&str>) -> bool {
-    noise_reduction == Some("strong")
+    noise_reduction == Some("on")
 }
 
 // Entrauschen zuerst, danach die Lautstaerke anpassen, damit das Rauschen
@@ -745,26 +741,18 @@ mod tests {
     fn noise_filter_modes() {
         assert_eq!(get_noise_filter(None).unwrap(), None);
         assert_eq!(get_noise_filter(Some("none")).unwrap(), None);
-        assert!(get_noise_filter(Some("light"))
-            .unwrap()
-            .unwrap()
-            .contains("afftdn"));
-        assert!(get_noise_filter(Some("light"))
-            .unwrap()
-            .unwrap()
-            .contains("tn=1"));
-        assert!(get_noise_filter(Some("strong"))
-            .unwrap()
-            .unwrap()
-            .contains("arnndn=m=sh.rnnn"));
+        let on = get_noise_filter(Some("on")).unwrap().unwrap();
+        assert!(on.contains("arnndn=m=sh.rnnn:mix=0.5"));
+        assert!(!on.contains("lowpass"));
+        assert!(get_noise_filter(Some("light")).is_err());
         assert!(get_noise_filter(Some("invalid")).is_err());
-        assert!(needs_noise_model(Some("strong")));
-        assert!(!needs_noise_model(Some("light")));
+        assert!(needs_noise_model(Some("on")));
+        assert!(!needs_noise_model(Some("none")));
     }
 
     #[test]
     fn noise_filter_runs_before_volume_adjustment() {
-        let chain = build_audio_filter_chain(Some("speech"), Some("strong"))
+        let chain = build_audio_filter_chain(Some("speech"), Some("on"))
             .unwrap()
             .unwrap();
         let noise_pos = chain.find("arnndn").unwrap();
@@ -789,11 +777,11 @@ mod tests {
             "/tmp/input.mp4",
             "/tmp/output.mp4",
             Some("none"),
-            Some("light"),
+            Some("on"),
         )
         .unwrap();
         let pos = args.iter().position(|arg| arg == "-filter:a").unwrap();
-        assert!(args[pos + 1].contains("afftdn"));
+        assert!(args[pos + 1].contains("arnndn"));
     }
 
     #[test]

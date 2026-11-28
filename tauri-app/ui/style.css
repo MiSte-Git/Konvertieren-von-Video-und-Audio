@@ -190,6 +190,14 @@ header p {
   font-size: 14px;
 }
 
+.row label.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  cursor: pointer;
+}
+
 /* Audio-Optionen: feste Spalten, damit lange Hilfetexte die Auswahl nicht zusammendruecken. */
 #audioOptionsSection .row {
   grid-template-columns: 170px minmax(220px, 1fr) minmax(0, 1fr);

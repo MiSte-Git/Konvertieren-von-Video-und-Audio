@@ -34,16 +34,8 @@
       "strong": "Voor opnamen met zeer zachte stemmen en plotseling zeer luide passages."
     },
     "noise": "Achtergrondgeluid",
-    "noiseOption": {
-      "none": "Geen reductie",
-      "light": "Licht verminderen",
-      "strong": "Sterk verminderen (spraak)"
-    },
-    "noiseHelp": {
-      "none": "Achtergrondgeluid wordt niet veranderd.",
-      "light": "Dempt constant geluid zoals airconditioning of ventilatoren. Past zich aan wanneer het apparaat aan- of uitgaat.",
-      "strong": "AI-filter dat alleen stemmen doorlaat. Werkt ook als het geluid tussendoor stopt. Muziek wordt ook sterk gedempt."
-    }
+    "noiseOn": "Verminderen",
+    "noiseHelp": "Dempt geluid zoals airconditioning of ventilatoren, stemmen blijven helder. Gebruik bij zachte stemmen ook de volumeaanpassing."
   },
   "join": {
     "title": "Volgorde",
@@ -191,7 +183,6 @@
     "audioNormalize": "genormaliseerd",
     "audioSpeech": "spraak_genivelleerd",
     "audioStrong": "sterk_genivelleerd",
-    "noiseLight": "ontruist_licht",
-    "noiseStrong": "ontruist_sterk"
+    "noise": "ontruist"
   }
 }

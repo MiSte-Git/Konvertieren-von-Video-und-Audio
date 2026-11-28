@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title data-i18n="app.title">Konvertierung Audio-Video</title>
-    <link rel="stylesheet" href="style.css?v=9" />
+    <link rel="stylesheet" href="style.css?v=10" />
   </head>
   <body>
     <div class="app">
@@ -48,12 +48,11 @@
         </div>
         <div class="row">
           <label for="noiseReduction" data-i18n="audio.noise">Hintergrundgeräusche</label>
-          <select id="noiseReduction">
-            <option value="none" data-i18n="audio.noiseOption.none" data-i18n-title="audio.noiseHelp.none">Keine Reduzierung</option>
-            <option value="light" data-i18n="audio.noiseOption.light" data-i18n-title="audio.noiseHelp.light">Leicht reduzieren</option>
-            <option value="strong" data-i18n="audio.noiseOption.strong" data-i18n-title="audio.noiseHelp.strong">Stark reduzieren (Sprache)</option>
-          </select>
-          <span id="noiseReductionHelp" class="field-help">Hintergrundgeräusche werden nicht verändert.</span>
+          <label class="checkbox-option">
+            <input id="noiseReduction" type="checkbox" />
+            <span data-i18n="audio.noiseOn">Reduzieren</span>
+          </label>
+          <span class="field-help" data-i18n="audio.noiseHelp">Dämpft Rauschen wie Klimaanlage oder Lüfter, die Stimmen bleiben klar. Für leise Stimmen zusätzlich die Lautstärkeanpassung nutzen.</span>
         </div>
       </section>
 
@@ -161,6 +160,6 @@
       </div>
     </dialog>
 
-    <script src="app.js?v=12"></script>
+    <script src="app.js?v=13"></script>
   </body>
 </html>

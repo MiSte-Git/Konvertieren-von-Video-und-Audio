@@ -38,8 +38,8 @@ SOFTWARE.
 
 ## RNNoise-Modell (tauri-app/src-tauri/resources/rnnoise/sh.rnnn)
 
-Modell `somnolent-hogwash` für den ffmpeg-Filter `arnndn` (Rauschunterdrückung
-„Stark reduzieren“), aus [rnnoise-models](https://github.com/GregorR/rnnoise-models)
+Modell `somnolent-hogwash` für den ffmpeg-Filter `arnndn` (Schalter
+„Hintergrundgeräusche reduzieren“), aus [rnnoise-models](https://github.com/GregorR/rnnoise-models)
 von Gregor Richards. Das Modell ist in die App eingebettet und wird zur Laufzeit
 in den Cache-Ordner der App geschrieben.
 
