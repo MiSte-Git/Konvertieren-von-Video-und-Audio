@@ -1,6 +1,6 @@
 [package]
 name = "konvertierung-tauri"
-version = "1.2.3"
+version = "1.2.4-dev"
 edition = "2021"
 build = "build.rs"
 
