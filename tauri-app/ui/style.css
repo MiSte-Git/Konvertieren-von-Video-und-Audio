@@ -190,6 +190,11 @@ header p {
   font-size: 14px;
 }
 
+/* Audio-Optionen: feste Spalten, damit lange Hilfetexte die Auswahl nicht zusammendruecken. */
+#audioOptionsSection .row {
+  grid-template-columns: 170px minmax(220px, 1fr) minmax(0, 1fr);
+}
+
 input[type="text"],
 input[type="number"],
 select {
@@ -383,6 +388,9 @@ body.is-running .progress {
 
 @media (max-width: 720px) {
   .row {
+    grid-template-columns: 1fr;
+  }
+  #audioOptionsSection .row {
     grid-template-columns: 1fr;
   }
   .modes {

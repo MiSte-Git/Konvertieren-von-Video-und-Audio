@@ -389,7 +389,7 @@ fn run_ffmpeg_in(
     }
     cmd.args(&args[1..])
         .stdout(Stdio::piped())
-        .stderr(Stdio::inherit());
+        .stderr(Stdio::piped());
     let mut child = cmd
         .spawn()
         .map_err(|e| app_err_with("ffmpeg_start", &[("detail", e.to_string())]))?;
@@ -397,6 +397,22 @@ fn run_ffmpeg_in(
         let mut guard = current_pid.lock().map_err(|_| app_err("lock_error"))?;
         *guard = Some(child.id());
     }
+    // stderr parallel lesen (sonst kann ffmpeg blockieren) und die letzten
+    // Zeilen fuer die Fehlermeldung aufheben.
+    let stderr_reader = child.stderr.take().map(|stderr| {
+        std::thread::spawn(move || {
+            let mut lines: Vec<String> = Vec::new();
+            for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+                if !line.trim().is_empty() {
+                    lines.push(line);
+                    if lines.len() > 20 {
+                        lines.remove(0);
+                    }
+                }
+            }
+            lines
+        })
+    });
     if let Some(stdout) = child.stdout.take() {
         let reader = BufReader::new(stdout);
         let mut values: HashMap<String, String> = HashMap::new();
@@ -426,12 +442,15 @@ fn run_ffmpeg_in(
     if let Ok(mut guard) = progress_state.lock() {
         *guard = None;
     }
+    let stderr_lines = stderr_reader
+        .and_then(|handle| handle.join().ok())
+        .unwrap_or_default();
     if !status.success() {
         return Err(app_err_with(
             "ffmpeg_failed",
             &[
                 ("exit", exit_code(status.code())),
-                ("detail", String::new()),
+                ("detail", stderr_lines.join("\n")),
             ],
         ));
     }
