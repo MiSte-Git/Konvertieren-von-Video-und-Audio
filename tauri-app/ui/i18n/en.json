@@ -32,6 +32,17 @@
       "normalize": "Adjusts the overall loudness of the file.",
       "speech": "Evens out different speaker volumes and limits volume peaks.",
       "strong": "For recordings with very quiet voices and sudden very loud passages."
+    },
+    "noise": "Background noise",
+    "noiseOption": {
+      "none": "No reduction",
+      "light": "Reduce slightly",
+      "strong": "Reduce strongly (speech)"
+    },
+    "noiseHelp": {
+      "none": "Background noise is not changed.",
+      "light": "Dampens steady noise such as air conditioning or fans. Adapts when the device switches on or off.",
+      "strong": "AI filter that only lets voices through. Also works when the noise stops in between. Music is strongly dampened as well."
     }
   },
   "join": {
@@ -166,7 +177,9 @@
     "time_format_invalid": "Invalid time format. Please use HH:MM:SS.",
     "task_failed": "Internal processing error",
     "update_failed": "Update failed",
-    "update_none": "No update available."
+    "update_none": "No update available.",
+    "unknown_noise_reduction": "Unknown noise reduction.",
+    "noise_model_write": "Noise reduction model could not be saved"
   },
   "suffix": {
     "clip": "clip",
@@ -177,6 +190,8 @@
     "audioAdjusted": "audio_adjusted",
     "audioNormalize": "normalized",
     "audioSpeech": "speech_leveled",
-    "audioStrong": "strongly_leveled"
+    "audioStrong": "strongly_leveled",
+    "noiseLight": "denoised_light",
+    "noiseStrong": "denoised_strong"
   }
 }

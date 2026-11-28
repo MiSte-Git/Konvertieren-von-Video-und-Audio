@@ -32,6 +32,17 @@
       "normalize": "Prilagođava ukupnu glasnoću datoteke.",
       "speech": "Ujednačuje različite glasnoće govornika i ograničava vršne razine.",
       "strong": "Za snimke s vrlo tihim glasovima i iznenadnim vrlo glasnim dijelovima."
+    },
+    "noise": "Pozadinska buka",
+    "noiseOption": {
+      "none": "Bez smanjenja",
+      "light": "Blago smanji",
+      "strong": "Jako smanji (govor)"
+    },
+    "noiseHelp": {
+      "none": "Pozadinska buka se ne mijenja.",
+      "light": "Prigušuje stalnu buku poput klima-uređaja ili ventilatora. Prilagođava se kada se uređaj uključi ili isključi.",
+      "strong": "AI filtar koji propušta samo glasove. Radi i kada buka povremeno prestane. Glazba se također jako prigušuje."
     }
   },
   "join": {
@@ -166,7 +177,9 @@
     "time_format_invalid": "Neispravan format vremena. Koristite HH:MM:SS.",
     "task_failed": "Interna pogreška obrade",
     "update_failed": "Ažuriranje nije uspjelo",
-    "update_none": "Nema dostupnih ažuriranja."
+    "update_none": "Nema dostupnih ažuriranja.",
+    "unknown_noise_reduction": "Nepoznato smanjenje buke.",
+    "noise_model_write": "Model za smanjenje buke nije moguće spremiti"
   },
   "suffix": {
     "clip": "isjecak",
@@ -177,6 +190,8 @@
     "audioAdjusted": "audio_prilagoden",
     "audioNormalize": "normalizirano",
     "audioSpeech": "govor_izjednacen",
-    "audioStrong": "jako_izjednaceno"
+    "audioStrong": "jako_izjednaceno",
+    "noiseLight": "bez_buke_blago",
+    "noiseStrong": "bez_buke_jako"
   }
 }

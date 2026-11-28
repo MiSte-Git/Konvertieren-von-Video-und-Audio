@@ -34,7 +34,8 @@ fn app_err_with(code: &str, params: &[(&str, String)]) -> String {
 }
 
 fn exit_code(code: Option<i32>) -> String {
-    code.map(|c| c.to_string()).unwrap_or_else(|| "-".to_string())
+    code.map(|c| c.to_string())
+        .unwrap_or_else(|| "-".to_string())
 }
 
 fn apply_no_window(_cmd: &mut Command) {
@@ -188,10 +189,91 @@ fn get_audio_filter(mode: Option<&str>) -> Result<Option<&'static str>, String> 
     }
 }
 
+// RNNoise-Modell (somnolent-hogwash: Sprache in Aufnahmen mit Stoergeraeuschen),
+// gemeinfrei, aus github.com/GregorR/rnnoise-models.
+const RNNOISE_MODEL: &[u8] = include_bytes!("../resources/rnnoise/sh.rnnn");
+const RNNOISE_MODEL_FILE: &str = "sh.rnnn";
+
+// Hintergrundgeraeusche reduzieren. Hoch-/Tiefpass entfernt Brummen und Zischen
+// ausserhalb des Sprachbereichs.
+// light:  FFT-Entrauschen, das Rauschprofil wird laufend nachgefuehrt (tn=1),
+//         damit ein Geraet, das an- und ausgeht, abgefangen wird.
+// strong: RNNoise, erkennt Sprache pro Frame und ist unabhaengig davon,
+//         ob das Stoergeraeusch gerade laeuft.
+fn get_noise_filter(mode: Option<&str>) -> Result<Option<String>, String> {
+    match mode.unwrap_or("none") {
+        "none" => Ok(None),
+        "light" => Ok(Some(
+            "highpass=f=80,lowpass=f=8000,afftdn=nr=12:nf=-40:tn=1".to_string(),
+        )),
+        "strong" => Ok(Some(format!(
+            "highpass=f=80,lowpass=f=8000,arnndn=m={}",
+            RNNOISE_MODEL_FILE
+        ))),
+        _ => Err(app_err("unknown_noise_reduction")),
+    }
+}
+
+fn needs_noise_model(noise_reduction: Option<&str>) -> bool {
+    noise_reduction == Some("strong")
+}
+
+// Entrauschen zuerst, danach die Lautstaerke anpassen, damit das Rauschen
+// nicht vorher mit angehoben wird.
+fn build_audio_filter_chain(
+    audio_adjustment: Option<&str>,
+    noise_reduction: Option<&str>,
+) -> Result<Option<String>, String> {
+    let parts: Vec<String> = [
+        get_noise_filter(noise_reduction)?,
+        get_audio_filter(audio_adjustment)?.map(String::from),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    Ok(if parts.is_empty() {
+        None
+    } else {
+        Some(parts.join(","))
+    })
+}
+
+// Schreibt das Modell in den Cache-Ordner der App. ffmpeg wird in diesem Ordner
+// gestartet und bekommt nur den Dateinamen, so muss der Pfad (z.B. C:\...) nicht
+// fuer die Filtersyntax maskiert werden.
+fn ensure_noise_model_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    let base = app
+        .path()
+        .app_cache_dir()
+        .unwrap_or_else(|_| std::env::temp_dir().join("konvertierung-audio-video"));
+    let dir = base.join("rnnoise");
+    let file = dir.join(RNNOISE_MODEL_FILE);
+    let up_to_date = std::fs::metadata(&file)
+        .map(|m| m.len() == RNNOISE_MODEL.len() as u64)
+        .unwrap_or(false);
+    if !up_to_date {
+        std::fs::create_dir_all(&dir)
+            .and_then(|_| std::fs::write(&file, RNNOISE_MODEL))
+            .map_err(|e| app_err_with("noise_model_write", &[("detail", e.to_string())]))?;
+    }
+    Ok(dir)
+}
+
+fn absolute_path(path: &str) -> String {
+    let p = Path::new(path);
+    if p.is_absolute() {
+        return path.to_string();
+    }
+    std::env::current_dir()
+        .map(|cwd| cwd.join(p).to_string_lossy().into_owned())
+        .unwrap_or_else(|_| path.to_string())
+}
+
 fn build_audio_mp3_ffmpeg_args(
     mode: &str,
     input: &str,
     audio_adjustment: Option<&str>,
+    noise_reduction: Option<&str>,
 ) -> Result<Vec<String>, String> {
     let mut args: Vec<String> = match mode {
         "v2mp3" => [
@@ -231,9 +313,9 @@ fn build_audio_mp3_ffmpeg_args(
         _ => return Err(app_err("unknown_mode")),
     };
 
-    if let Some(filter) = get_audio_filter(audio_adjustment)? {
+    if let Some(filter) = build_audio_filter_chain(audio_adjustment, noise_reduction)? {
         args.push("-af".to_string());
-        args.push(filter.to_string());
+        args.push(filter);
     }
     args.extend(["-f", "wav", "pipe:1"].into_iter().map(String::from));
     Ok(args)
@@ -243,6 +325,7 @@ fn build_adjust_video_audio_args(
     input: &str,
     output: &str,
     audio_adjustment: Option<&str>,
+    noise_reduction: Option<&str>,
 ) -> Result<Vec<String>, String> {
     let mut args = [
         "ffmpeg", "-y", "-i", input, "-map", "0", "-c", "copy", "-c:a", "aac", "-b:a", "192k",
@@ -250,9 +333,9 @@ fn build_adjust_video_audio_args(
     .into_iter()
     .map(String::from)
     .collect::<Vec<_>>();
-    if let Some(filter) = get_audio_filter(audio_adjustment)? {
+    if let Some(filter) = build_audio_filter_chain(audio_adjustment, noise_reduction)? {
         args.push("-filter:a".to_string());
-        args.push(filter.to_string());
+        args.push(filter);
     }
     args.extend(
         [
@@ -275,7 +358,17 @@ struct FfmpegProgress {
 }
 
 fn run_ffmpeg(
+    args: Vec<String>,
+    current_pid: Arc<Mutex<Option<u32>>>,
+    progress_state: Arc<Mutex<Option<HashMap<String, String>>>>,
+    app: AppHandle,
+) -> Result<(), String> {
+    run_ffmpeg_in(args, None, current_pid, progress_state, app)
+}
+
+fn run_ffmpeg_in(
     mut args: Vec<String>,
+    work_dir: Option<PathBuf>,
     current_pid: Arc<Mutex<Option<u32>>>,
     progress_state: Arc<Mutex<Option<HashMap<String, String>>>>,
     app: AppHandle,
@@ -291,6 +384,9 @@ fn run_ffmpeg(
     }
     let mut cmd = Command::new(&args[0]);
     apply_no_window(&mut cmd);
+    if let Some(dir) = &work_dir {
+        cmd.current_dir(dir);
+    }
     cmd.args(&args[1..])
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit());
@@ -333,7 +429,10 @@ fn run_ffmpeg(
     if !status.success() {
         return Err(app_err_with(
             "ffmpeg_failed",
-            &[("exit", exit_code(status.code())), ("detail", String::new())],
+            &[
+                ("exit", exit_code(status.code())),
+                ("detail", String::new()),
+            ],
         ));
     }
     Ok(())
@@ -343,6 +442,7 @@ fn run_ffmpeg_lame(
     ffmpeg_args: Vec<String>,
     lame_args: Vec<String>,
     output_path: String,
+    work_dir: Option<PathBuf>,
     current_pid: Arc<Mutex<Option<u32>>>,
     progress_state: Arc<Mutex<Option<HashMap<String, String>>>>,
     app: AppHandle,
@@ -353,6 +453,9 @@ fn run_ffmpeg_lame(
 
     let mut ffmpeg_cmd = Command::new(&ffmpeg_args[0]);
     apply_no_window(&mut ffmpeg_cmd);
+    if let Some(dir) = &work_dir {
+        ffmpeg_cmd.current_dir(dir);
+    }
     ffmpeg_cmd
         .args(&ffmpeg_args[1..])
         .stdout(Stdio::piped())
@@ -564,7 +667,8 @@ mod tests {
 
     #[test]
     fn audio_mp3_args_omit_af_for_none() {
-        let args = build_audio_mp3_ffmpeg_args("v2mp3", "/tmp/in file.mp4", Some("none")).unwrap();
+        let args =
+            build_audio_mp3_ffmpeg_args("v2mp3", "/tmp/in file.mp4", Some("none"), None).unwrap();
         assert!(!has_arg(&args, "-af"));
         assert_eq!(args.last().map(String::as_str), Some("pipe:1"));
     }
@@ -572,7 +676,7 @@ mod tests {
     #[test]
     fn audio_mp3_args_include_filter_for_video_to_mp3() {
         let args =
-            build_audio_mp3_ffmpeg_args("v2mp3", "/tmp/in file.mp4", Some("speech")).unwrap();
+            build_audio_mp3_ffmpeg_args("v2mp3", "/tmp/in file.mp4", Some("speech"), None).unwrap();
         let af_pos = args.iter().position(|arg| arg == "-af").unwrap();
         assert_eq!(
             args.get(af_pos + 1).map(String::as_str),
@@ -584,7 +688,7 @@ mod tests {
     #[test]
     fn audio_mp3_args_include_filter_for_audio_to_mp3() {
         let args =
-            build_audio_mp3_ffmpeg_args("a2mp3", "/tmp/in file.wav", Some("strong")).unwrap();
+            build_audio_mp3_ffmpeg_args("a2mp3", "/tmp/in file.wav", Some("strong"), None).unwrap();
         let af_pos = args.iter().position(|arg| arg == "-af").unwrap();
         assert_eq!(
             args.get(af_pos + 1).map(String::as_str),
@@ -594,15 +698,78 @@ mod tests {
 
     #[test]
     fn adjust_video_audio_copies_video_and_encodes_audio() {
-        let args =
-            build_adjust_video_audio_args("/tmp/input.mp4", "/tmp/output.mp4", Some("normalize"))
-                .unwrap();
+        let args = build_adjust_video_audio_args(
+            "/tmp/input.mp4",
+            "/tmp/output.mp4",
+            Some("normalize"),
+            None,
+        )
+        .unwrap();
         assert!(args.windows(2).any(|pair| pair == ["-c", "copy"]));
         assert!(args.windows(2).any(|pair| pair == ["-c:a", "aac"]));
         assert!(args
             .windows(2)
             .any(|pair| pair == ["-filter:a", "loudnorm=I=-16:LRA=11:TP=-1.5"]));
         assert!(!has_arg(&args, "-c:v"));
+    }
+
+    #[test]
+    fn noise_filter_modes() {
+        assert_eq!(get_noise_filter(None).unwrap(), None);
+        assert_eq!(get_noise_filter(Some("none")).unwrap(), None);
+        assert!(get_noise_filter(Some("light"))
+            .unwrap()
+            .unwrap()
+            .contains("afftdn"));
+        assert!(get_noise_filter(Some("light"))
+            .unwrap()
+            .unwrap()
+            .contains("tn=1"));
+        assert!(get_noise_filter(Some("strong"))
+            .unwrap()
+            .unwrap()
+            .contains("arnndn=m=sh.rnnn"));
+        assert!(get_noise_filter(Some("invalid")).is_err());
+        assert!(needs_noise_model(Some("strong")));
+        assert!(!needs_noise_model(Some("light")));
+    }
+
+    #[test]
+    fn noise_filter_runs_before_volume_adjustment() {
+        let chain = build_audio_filter_chain(Some("speech"), Some("strong"))
+            .unwrap()
+            .unwrap();
+        let noise_pos = chain.find("arnndn").unwrap();
+        let volume_pos = chain.find("dynaudnorm").unwrap();
+        assert!(noise_pos < volume_pos);
+        assert_eq!(
+            build_audio_filter_chain(Some("none"), Some("none")).unwrap(),
+            None
+        );
+        assert_eq!(
+            build_audio_filter_chain(Some("normalize"), None)
+                .unwrap()
+                .as_deref(),
+            get_audio_filter(Some("normalize")).unwrap()
+        );
+    }
+
+    #[test]
+    fn noise_filter_is_added_to_adjust_video_audio() {
+        let args = build_adjust_video_audio_args(
+            "/tmp/input.mp4",
+            "/tmp/output.mp4",
+            Some("none"),
+            Some("light"),
+        )
+        .unwrap();
+        let pos = args.iter().position(|arg| arg == "-filter:a").unwrap();
+        assert!(args[pos + 1].contains("afftdn"));
+    }
+
+    #[test]
+    fn embedded_noise_model_is_present() {
+        assert!(RNNOISE_MODEL.len() > 100_000);
     }
 
     #[test]
@@ -691,6 +858,7 @@ async fn convert_media(
     input: String,
     output: String,
     audio_adjustment: Option<String>,
+    noise_reduction: Option<String>,
     state: State<'_, AppState>,
     app: AppHandle,
 ) -> Result<(), String> {
@@ -698,9 +866,10 @@ async fn convert_media(
     log_line(
         &app,
         &format!(
-            "convert start mode={} audio_adjustment={} input={} output={}",
+            "convert start mode={} audio_adjustment={} noise_reduction={} input={} output={}",
             mode,
             audio_adjustment.as_deref().unwrap_or("none"),
+            noise_reduction.as_deref().unwrap_or("none"),
             input,
             output
         ),
@@ -713,13 +882,37 @@ async fn convert_media(
     }
     ensure_output_dir(&output)?;
 
+    let uses_audio_filters = matches!(mode.as_str(), "v2mp3" | "a2mp3" | "adjustvideoaudio");
+    let noise_reduction = if uses_audio_filters {
+        noise_reduction
+    } else {
+        None
+    };
+    // ffmpeg laeuft fuer RNNoise im Modell-Ordner, relative Pfade daher vorher aufloesen.
+    let work_dir = if needs_noise_model(noise_reduction.as_deref()) {
+        Some(ensure_noise_model_dir(&app)?)
+    } else {
+        None
+    };
+    let (input, output) = if work_dir.is_some() {
+        (absolute_path(&input), absolute_path(&output))
+    } else {
+        (input, output)
+    };
+
     let args_owned = match mode.as_str() {
-        "v2mp3" | "a2mp3" => {
-            build_audio_mp3_ffmpeg_args(mode.as_str(), &input, audio_adjustment.as_deref())?
-        }
-        "adjustvideoaudio" => {
-            build_adjust_video_audio_args(&input, &output, audio_adjustment.as_deref())?
-        }
+        "v2mp3" | "a2mp3" => build_audio_mp3_ffmpeg_args(
+            mode.as_str(),
+            &input,
+            audio_adjustment.as_deref(),
+            noise_reduction.as_deref(),
+        )?,
+        "adjustvideoaudio" => build_adjust_video_audio_args(
+            &input,
+            &output,
+            audio_adjustment.as_deref(),
+            noise_reduction.as_deref(),
+        )?,
         "divx" => vec![
             "ffmpeg",
             "-y",
@@ -798,12 +991,19 @@ async fn convert_media(
                 args_owned,
                 lame_args,
                 output_path,
+                work_dir,
                 current_pid,
                 progress_state,
                 app_handle,
             )
         } else {
-            run_ffmpeg(args_owned, current_pid, progress_state, app_handle)
+            run_ffmpeg_in(
+                args_owned,
+                work_dir,
+                current_pid,
+                progress_state,
+                app_handle,
+            )
         }
     })
     .await
@@ -1299,7 +1499,9 @@ async fn check_update(app: AppHandle) -> Result<Option<serde_json::Value>, Strin
 // Fortschritt per Event update_progress {downloaded, total}.
 #[tauri::command]
 async fn install_update(app: AppHandle) -> Result<(), String> {
-    let to_err = |e: tauri_plugin_updater::Error| app_err_with("update_failed", &[("detail", e.to_string())]);
+    let to_err = |e: tauri_plugin_updater::Error| {
+        app_err_with("update_failed", &[("detail", e.to_string())])
+    };
     let update = app
         .updater()
         .map_err(to_err)?

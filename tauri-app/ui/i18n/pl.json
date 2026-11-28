@@ -32,6 +32,17 @@
       "normalize": "Dostosowuje ogólną głośność pliku.",
       "speech": "Wyrównuje głośność różnych mówców i ogranicza szczyty głośności.",
       "strong": "Do nagrań z bardzo cichymi głosami i nagłymi, bardzo głośnymi fragmentami."
+    },
+    "noise": "Szumy w tle",
+    "noiseOption": {
+      "none": "Bez redukcji",
+      "light": "Lekko zredukuj",
+      "strong": "Mocno zredukuj (mowa)"
+    },
+    "noiseHelp": {
+      "none": "Szumy w tle nie są zmieniane.",
+      "light": "Tłumi stałe szumy, np. klimatyzacji lub wentylatorów. Dostosowuje się, gdy urządzenie się włącza lub wyłącza.",
+      "strong": "Filtr AI przepuszczający tylko głosy. Działa także, gdy szum chwilowo ustaje. Muzyka również jest mocno tłumiona."
     }
   },
   "join": {
@@ -166,7 +177,9 @@
     "time_format_invalid": "Nieprawidłowy format czasu. Użyj HH:MM:SS.",
     "task_failed": "Wewnętrzny błąd przetwarzania",
     "update_failed": "Aktualizacja nie powiodła się",
-    "update_none": "Brak dostępnych aktualizacji."
+    "update_none": "Brak dostępnych aktualizacji.",
+    "unknown_noise_reduction": "Nieznana redukcja szumów.",
+    "noise_model_write": "Nie można zapisać modelu redukcji szumów"
   },
   "suffix": {
     "clip": "fragment",
@@ -177,6 +190,8 @@
     "audioAdjusted": "audio_dostosowane",
     "audioNormalize": "znormalizowany",
     "audioSpeech": "mowa_wyrownana",
-    "audioStrong": "silnie_wyrownany"
+    "audioStrong": "silnie_wyrownany",
+    "noiseLight": "odszumione_lekko",
+    "noiseStrong": "odszumione_mocno"
   }
 }

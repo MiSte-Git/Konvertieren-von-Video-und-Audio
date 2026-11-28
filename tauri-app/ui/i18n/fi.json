@@ -32,6 +32,17 @@
       "normalize": "Säätää tiedoston kokonaisäänenvoimakkuutta.",
       "speech": "Tasaa puhujien eri äänenvoimakkuudet ja rajoittaa huippuja.",
       "strong": "Tallenteille, joissa on hyvin hiljaisia ääniä ja äkillisiä erittäin kovia kohtia."
+    },
+    "noise": "Taustamelu",
+    "noiseOption": {
+      "none": "Ei vaimennusta",
+      "light": "Vaimenna hieman",
+      "strong": "Vaimenna voimakkaasti (puhe)"
+    },
+    "noiseHelp": {
+      "none": "Taustamelua ei muuteta.",
+      "light": "Vaimentaa tasaista melua, kuten ilmastointia tai tuulettimia. Mukautuu, kun laite käynnistyy tai sammuu.",
+      "strong": "Tekoälysuodatin, joka päästää läpi vain äänet. Toimii myös, kun melu välillä lakkaa. Myös musiikki vaimenee voimakkaasti."
     }
   },
   "join": {
@@ -166,7 +177,9 @@
     "time_format_invalid": "Virheellinen aikamuoto. Käytä muotoa HH:MM:SS.",
     "task_failed": "Sisäinen käsittelyvirhe",
     "update_failed": "Päivitys epäonnistui",
-    "update_none": "Päivityksiä ei ole saatavilla."
+    "update_none": "Päivityksiä ei ole saatavilla.",
+    "unknown_noise_reduction": "Tuntematon kohinanvaimennus.",
+    "noise_model_write": "Kohinanvaimennuksen mallia ei voitu tallentaa"
   },
   "suffix": {
     "clip": "leike",
@@ -177,6 +190,8 @@
     "audioAdjusted": "aani_saadetty",
     "audioNormalize": "normalisoitu",
     "audioSpeech": "puhe_tasattu",
-    "audioStrong": "voimakkaasti_tasattu"
+    "audioStrong": "voimakkaasti_tasattu",
+    "noiseLight": "vaimennettu_kevyt",
+    "noiseStrong": "vaimennettu_vahva"
   }
 }

@@ -46,6 +46,15 @@
           </select>
           <span id="audioAdjustmentHelp" class="field-help">Die Lautstärke wird nicht verändert.</span>
         </div>
+        <div class="row">
+          <label for="noiseReduction" data-i18n="audio.noise">Hintergrundgeräusche</label>
+          <select id="noiseReduction">
+            <option value="none" data-i18n="audio.noiseOption.none" data-i18n-title="audio.noiseHelp.none">Keine Reduzierung</option>
+            <option value="light" data-i18n="audio.noiseOption.light" data-i18n-title="audio.noiseHelp.light">Leicht reduzieren</option>
+            <option value="strong" data-i18n="audio.noiseOption.strong" data-i18n-title="audio.noiseHelp.strong">Stark reduzieren (Sprache)</option>
+          </select>
+          <span id="noiseReductionHelp" class="field-help">Hintergrundgeräusche werden nicht verändert.</span>
+        </div>
       </section>
 
       <section id="joinOrderSection" class="card hidden">
@@ -152,6 +161,6 @@
       </div>
     </dialog>
 
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
   </body>
 </html>

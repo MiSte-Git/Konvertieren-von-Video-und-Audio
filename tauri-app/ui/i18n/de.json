@@ -32,6 +32,17 @@
       "normalize": "Passt die Gesamtlautheit der Datei an.",
       "speech": "Gleicht unterschiedliche Sprecherlautstärken aus und begrenzt Lautstärkespitzen.",
       "strong": "Für Aufnahmen mit sehr leisen Stimmen und plötzlich sehr lauten Passagen."
+    },
+    "noise": "Hintergrundgeräusche",
+    "noiseOption": {
+      "none": "Keine Reduzierung",
+      "light": "Leicht reduzieren",
+      "strong": "Stark reduzieren (Sprache)"
+    },
+    "noiseHelp": {
+      "none": "Hintergrundgeräusche werden nicht verändert.",
+      "light": "Dämpft gleichmäßige Geräusche wie Klimaanlage oder Lüfter. Passt sich an, wenn das Gerät an- oder ausgeht.",
+      "strong": "KI-Filter, der nur Stimmen durchlässt. Wirkt auch, wenn das Störgeräusch zwischendurch aussetzt. Musik wird ebenfalls stark gedämpft."
     }
   },
   "join": {
@@ -166,7 +177,9 @@
     "time_format_invalid": "Zeitformat ungültig. Bitte HH:MM:SS verwenden.",
     "task_failed": "Interner Fehler bei der Verarbeitung",
     "update_failed": "Update fehlgeschlagen",
-    "update_none": "Kein Update verfügbar."
+    "update_none": "Kein Update verfügbar.",
+    "unknown_noise_reduction": "Unbekannte Rauschunterdrückung.",
+    "noise_model_write": "Modell für die Rauschunterdrückung konnte nicht gespeichert werden"
   },
   "suffix": {
     "clip": "ausschnitt",
@@ -177,6 +190,8 @@
     "audioAdjusted": "audio_angepasst",
     "audioNormalize": "normalisiert",
     "audioSpeech": "sprache_ausgeglichen",
-    "audioStrong": "stark_ausgeglichen"
+    "audioStrong": "stark_ausgeglichen",
+    "noiseLight": "entrauscht_leicht",
+    "noiseStrong": "entrauscht_stark"
   }
 }

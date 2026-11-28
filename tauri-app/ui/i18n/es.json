@@ -32,6 +32,17 @@
       "normalize": "Ajusta el volumen general del archivo.",
       "speech": "Iguala los distintos volúmenes de los hablantes y limita los picos de volumen.",
       "strong": "Para grabaciones con voces muy bajas y pasajes repentinamente muy fuertes."
+    },
+    "noise": "Ruido de fondo",
+    "noiseOption": {
+      "none": "Sin reducción",
+      "light": "Reducir ligeramente",
+      "strong": "Reducir mucho (voz)"
+    },
+    "noiseHelp": {
+      "none": "El ruido de fondo no se modifica.",
+      "light": "Atenúa ruidos constantes como el aire acondicionado o ventiladores. Se adapta cuando el aparato se enciende o se apaga.",
+      "strong": "Filtro de IA que solo deja pasar las voces. También funciona cuando el ruido se interrumpe. La música también se atenúa mucho."
     }
   },
   "join": {
@@ -166,7 +177,9 @@
     "time_format_invalid": "Formato de hora no válido. Usa HH:MM:SS.",
     "task_failed": "Error interno de procesamiento",
     "update_failed": "Error en la actualización",
-    "update_none": "No hay actualizaciones disponibles."
+    "update_none": "No hay actualizaciones disponibles.",
+    "unknown_noise_reduction": "Reducción de ruido desconocida.",
+    "noise_model_write": "No se pudo guardar el modelo de reducción de ruido"
   },
   "suffix": {
     "clip": "fragmento",
@@ -177,6 +190,8 @@
     "audioAdjusted": "audio_ajustado",
     "audioNormalize": "normalizado",
     "audioSpeech": "voz_nivelada",
-    "audioStrong": "muy_nivelado"
+    "audioStrong": "muy_nivelado",
+    "noiseLight": "sin_ruido_ligero",
+    "noiseStrong": "sin_ruido_fuerte"
   }
 }

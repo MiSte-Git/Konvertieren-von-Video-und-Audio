@@ -32,6 +32,17 @@
       "normalize": "Regola il volume complessivo del file.",
       "speech": "Uniforma i diversi volumi delle voci e limita i picchi di volume.",
       "strong": "Per registrazioni con voci molto basse e passaggi improvvisamente molto forti."
+    },
+    "noise": "Rumore di fondo",
+    "noiseOption": {
+      "none": "Nessuna riduzione",
+      "light": "Riduci leggermente",
+      "strong": "Riduci molto (voce)"
+    },
+    "noiseHelp": {
+      "none": "Il rumore di fondo non viene modificato.",
+      "light": "Attenua rumori costanti come aria condizionata o ventole. Si adatta quando l'apparecchio si accende o si spegne.",
+      "strong": "Filtro IA che lascia passare solo le voci. Funziona anche quando il rumore si interrompe. Anche la musica viene molto attenuata."
     }
   },
   "join": {
@@ -166,7 +177,9 @@
     "time_format_invalid": "Formato orario non valido. Usa HH:MM:SS.",
     "task_failed": "Errore interno di elaborazione",
     "update_failed": "Aggiornamento non riuscito",
-    "update_none": "Nessun aggiornamento disponibile."
+    "update_none": "Nessun aggiornamento disponibile.",
+    "unknown_noise_reduction": "Riduzione del rumore sconosciuta.",
+    "noise_model_write": "Impossibile salvare il modello di riduzione del rumore"
   },
   "suffix": {
     "clip": "spezzone",
@@ -177,6 +190,8 @@
     "audioAdjusted": "audio_regolato",
     "audioNormalize": "normalizzato",
     "audioSpeech": "voce_bilanciata",
-    "audioStrong": "fortemente_bilanciato"
+    "audioStrong": "fortemente_bilanciato",
+    "noiseLight": "denoise_leggero",
+    "noiseStrong": "denoise_forte"
   }
 }

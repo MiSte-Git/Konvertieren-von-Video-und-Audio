@@ -32,6 +32,17 @@
       "normalize": "Ajuste le volume global du fichier.",
       "speech": "Égalise les différents volumes des voix et limite les pics de volume.",
       "strong": "Pour les enregistrements avec des voix très faibles et des passages soudainement très forts."
+    },
+    "noise": "Bruit de fond",
+    "noiseOption": {
+      "none": "Aucune réduction",
+      "light": "Réduire légèrement",
+      "strong": "Réduire fortement (voix)"
+    },
+    "noiseHelp": {
+      "none": "Le bruit de fond n'est pas modifié.",
+      "light": "Atténue les bruits constants comme la climatisation ou les ventilateurs. S'adapte lorsque l'appareil s'allume ou s'éteint.",
+      "strong": "Filtre IA qui ne laisse passer que les voix. Fonctionne aussi lorsque le bruit s'interrompt. La musique est également fortement atténuée."
     }
   },
   "join": {
@@ -166,7 +177,9 @@
     "time_format_invalid": "Format d'heure invalide. Veuillez utiliser HH:MM:SS.",
     "task_failed": "Erreur interne de traitement",
     "update_failed": "Échec de la mise à jour",
-    "update_none": "Aucune mise à jour disponible."
+    "update_none": "Aucune mise à jour disponible.",
+    "unknown_noise_reduction": "Réduction de bruit inconnue.",
+    "noise_model_write": "Le modèle de réduction de bruit n'a pas pu être enregistré"
   },
   "suffix": {
     "clip": "extrait",
@@ -177,6 +190,8 @@
     "audioAdjusted": "audio_ajuste",
     "audioNormalize": "normalise",
     "audioSpeech": "voix_egalisee",
-    "audioStrong": "fortement_egalise"
+    "audioStrong": "fortement_egalise",
+    "noiseLight": "debruite_leger",
+    "noiseStrong": "debruite_fort"
   }
 }

@@ -32,6 +32,17 @@
       "normalize": "Past de totale luidheid van het bestand aan.",
       "speech": "Trekt verschillende sprekersvolumes gelijk en begrenst volumepieken.",
       "strong": "Voor opnamen met zeer zachte stemmen en plotseling zeer luide passages."
+    },
+    "noise": "Achtergrondgeluid",
+    "noiseOption": {
+      "none": "Geen reductie",
+      "light": "Licht verminderen",
+      "strong": "Sterk verminderen (spraak)"
+    },
+    "noiseHelp": {
+      "none": "Achtergrondgeluid wordt niet veranderd.",
+      "light": "Dempt constant geluid zoals airconditioning of ventilatoren. Past zich aan wanneer het apparaat aan- of uitgaat.",
+      "strong": "AI-filter dat alleen stemmen doorlaat. Werkt ook als het geluid tussendoor stopt. Muziek wordt ook sterk gedempt."
     }
   },
   "join": {
@@ -166,7 +177,9 @@
     "time_format_invalid": "Ongeldige tijdnotatie. Gebruik HH:MM:SS.",
     "task_failed": "Interne verwerkingsfout",
     "update_failed": "Update mislukt",
-    "update_none": "Geen update beschikbaar."
+    "update_none": "Geen update beschikbaar.",
+    "unknown_noise_reduction": "Onbekende ruisonderdrukking.",
+    "noise_model_write": "Model voor ruisonderdrukking kon niet worden opgeslagen"
   },
   "suffix": {
     "clip": "fragment",
@@ -177,6 +190,8 @@
     "audioAdjusted": "audio_aangepast",
     "audioNormalize": "genormaliseerd",
     "audioSpeech": "spraak_genivelleerd",
-    "audioStrong": "sterk_genivelleerd"
+    "audioStrong": "sterk_genivelleerd",
+    "noiseLight": "ontruist_licht",
+    "noiseStrong": "ontruist_sterk"
   }
 }

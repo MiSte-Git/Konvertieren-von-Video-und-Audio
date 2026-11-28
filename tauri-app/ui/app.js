@@ -196,6 +196,8 @@ const outputPath = document.getElementById("outputPath");
 const audioOptionsSection = document.getElementById("audioOptionsSection");
 const audioAdjustment = document.getElementById("audioAdjustment");
 const audioAdjustmentHelp = document.getElementById("audioAdjustmentHelp");
+const noiseReduction = document.getElementById("noiseReduction");
+const noiseReductionHelp = document.getElementById("noiseReductionHelp");
 const clipSection = document.getElementById("clipSection");
 const clipStart = document.getElementById("clipStart");
 const clipEnd = document.getElementById("clipEnd");
@@ -224,6 +226,7 @@ let cancelRequested = false;
 let currentBatchIndex = 0;
 let currentBatchTotal = 0;
 const AUDIO_ADJUSTMENT_STORAGE_KEY = "konvertierung.audioAdjustment";
+const NOISE_REDUCTION_STORAGE_KEY = "konvertierung.noiseReduction";
 
 function formatHms(totalSeconds) {
   if (!Number.isFinite(totalSeconds)) return "";
@@ -262,6 +265,10 @@ function getClipMode() {
 
 function getAudioAdjustment() {
   return audioAdjustment?.value || "none";
+}
+
+function getNoiseReduction() {
+  return noiseReduction?.value || "none";
 }
 
 function supportsBatchMode(mode = getMode()) {
@@ -335,6 +342,13 @@ const SUFFIX_FALLBACK = {
   audioNormalize: "normalisiert",
   audioSpeech: "sprache_ausgeglichen",
   audioStrong: "stark_ausgeglichen",
+  noiseLight: "entrauscht_leicht",
+  noiseStrong: "entrauscht_stark",
+};
+
+const NOISE_SUFFIX_KEYS = {
+  light: "noiseLight",
+  strong: "noiseStrong",
 };
 
 const AUDIO_SUFFIX_KEYS = {
@@ -343,12 +357,15 @@ const AUDIO_SUFFIX_KEYS = {
   strong: "audioStrong",
 };
 
-// Endung fuer die gewaehlte Lautstaerkeanpassung, leer bei "Keine"
-// oder wenn der Modus keine Anpassung unterstuetzt.
+// Endung fuer die gewaehlte Lautstaerkeanpassung und Rauschunterdrueckung,
+// leer bei "Keine" oder wenn der Modus keine Anpassung unterstuetzt.
 function audioSuffix(mode) {
   if (!supportsAudioAdjustment(mode)) return "";
-  const key = AUDIO_SUFFIX_KEYS[getAudioAdjustment()];
-  return key ? `_${fileSuffix(key)}` : "";
+  const keys = [NOISE_SUFFIX_KEYS[getNoiseReduction()], AUDIO_SUFFIX_KEYS[getAudioAdjustment()]];
+  return keys
+    .filter(Boolean)
+    .map((key) => `_${fileSuffix(key)}`)
+    .join("");
 }
 
 function fileSuffix(key) {
@@ -601,6 +618,23 @@ function loadAudioAdjustment() {
 
 function saveAudioAdjustment() {
   localStorage.setItem(AUDIO_ADJUSTMENT_STORAGE_KEY, getAudioAdjustment());
+}
+
+function updateNoiseReductionHelp() {
+  if (!noiseReductionHelp) return;
+  noiseReductionHelp.textContent = t(`audio.noiseHelp.${getNoiseReduction()}`);
+}
+
+function loadNoiseReduction() {
+  if (!noiseReduction) return;
+  const saved = localStorage.getItem(NOISE_REDUCTION_STORAGE_KEY) || "none";
+  const hasOption = Array.from(noiseReduction.options).some((option) => option.value === saved);
+  noiseReduction.value = hasOption ? saved : "none";
+  updateNoiseReductionHelp();
+}
+
+function saveNoiseReduction() {
+  localStorage.setItem(NOISE_REDUCTION_STORAGE_KEY, getNoiseReduction());
 }
 
 function formatBytes(value) {
@@ -878,6 +912,7 @@ async function start() {
           input: currentInput,
           output: currentOutput,
           audioAdjustment: getAudioAdjustment(),
+          noiseReduction: getNoiseReduction(),
         });
       }
 
@@ -905,7 +940,13 @@ async function start() {
     setStatusT("status.converting");
     startProgressPolling();
     const startedAt = Date.now();
-    await invoke("convert_media", { mode, input, output, audioAdjustment: getAudioAdjustment() });
+    await invoke("convert_media", {
+      mode,
+      input,
+      output,
+      audioAdjustment: getAudioAdjustment(),
+      noiseReduction: getNoiseReduction(),
+    });
     const elapsed = formatElapsedMs(Date.now() - startedAt);
     setStatusT("status.done", { elapsed });
   } catch (err) {
@@ -956,6 +997,7 @@ for (const radio of document.querySelectorAll('input[name="clipMode"]')) {
 
 updateClipVisibility();
 loadAudioAdjustment();
+loadNoiseReduction();
 updateAudioOptionsVisibility();
 updateVideoOptionsVisibility();
 updateOutputControls();
@@ -973,6 +1015,11 @@ outputPath.addEventListener("input", () => {
 audioAdjustment?.addEventListener("change", () => {
   updateAudioAdjustmentHelp();
   saveAudioAdjustment();
+  refreshAutoOutput();
+});
+noiseReduction?.addEventListener("change", () => {
+  updateNoiseReductionHelp();
+  saveNoiseReduction();
   refreshAutoOutput();
 });
 compressAfterJoin?.addEventListener("change", updateVideoOptionsVisibility);
@@ -1085,6 +1132,7 @@ function refreshAutoOutput() {
 function refreshDynamicTexts() {
   if (statusRenderer) statusEl.textContent = statusRenderer();
   updateAudioAdjustmentHelp();
+  updateNoiseReductionHelp();
   updateOutputControls();
   if (selectedInputs.length > 1) {
     inputPath.value = t("files.selectedCount", { count: selectedInputs.length });

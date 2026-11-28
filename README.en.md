@@ -11,6 +11,7 @@ This repository contains two variants:
 
 - Video to MP3, audio to MP3, video to AVI (DivX), video clip
 - Adjust the audio track of a video with the selected volume options without re-encoding the video.
+- Reduce background noise such as air conditioning or fans (Light: adaptive FFT noise reduction, Strong: RNNoise AI filter for speech). Can be combined with the volume adjustment and applies to the MP3 modes and the video audio track.
 - Compress videos to a freely selectable maximum size using two-pass H.264 encoding (default: 100 MB).
 - Join several videos in a changeable order without re-encoding.
 - Optionally compress the joined video to the selected maximum size afterwards.
