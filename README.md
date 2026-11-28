@@ -91,16 +91,23 @@ Im Dev-Modus werden `ffmpeg`, `ffprobe` und `lame` aus dem `PATH` verwendet, sie
 
 ## Release erstellen
 
-1. Version in `tauri-app/src-tauri/Cargo.toml` erhöhen. Das ist die einzige Stelle für die Version: `tauri.conf.json` enthält keine Version, und die App zeigt die Version aus `Cargo.toml` unter dem Titel und im Dialog **Über** an.
-2. Committen, dann Tag setzen und pushen. Der Tag muss zur Version passen (`v` + Version aus `Cargo.toml`):
+Die Version steht nur in `tauri-app/src-tauri/Cargo.toml` (`tauri.conf.json` enthält keine Version). Die App zeigt sie unter dem Titel und im Dialog **Über** an.
+
+Zwischen zwei Releases trägt der Code eine Entwicklungsversion wie `1.2.3-dev`. So ist ein Dev-Build klar von der veröffentlichten Version zu unterscheiden.
+
+1. Alle Änderungen committen, dann das Release-Skript starten:
    ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
+   scripts/release.sh            # 1.2.3-dev -> Release 1.2.3
+   scripts/release.sh 1.3.0      # oder eine bestimmte Version
    ```
-3. GitHub Actions (`.github/workflows/release.yml`) baut alle Installer und legt einen **Release-Entwurf** an. Prüfen und unter *Releases* veröffentlichen.
+   Unter Windows: `scripts\release.ps1` (bzw. `scripts\release.ps1 1.3.0`).
+
+   Das Skript setzt die Version in `Cargo.toml` und `Cargo.lock`, committet `Version 1.2.3`, setzt den Tag `v1.2.3`, stellt auf `1.2.4-dev` um und committet das. Nach Rückfrage pusht es `main` mit dem Tag.
+2. GitHub Actions (`.github/workflows/release.yml`) baut alle Installer und legt einen **Release-Entwurf** an.
+3. Den Entwurf unter *Releases* prüfen und **veröffentlichen** (Stift-Symbol > *Publish release*). Erst danach bieten installierte Apps das Update an.
 
 Hinweise:
-- Nur numerische Versionen verwenden (`1.0.0`, nicht `1.0.0-beta.1`). Der Windows-MSI-Installer (WiX) akzeptiert keine Pre-release-Suffixe, der Build scheitert sonst.
+- Release-Versionen sind rein numerisch (`1.2.3`). Der Windows-MSI-Installer (WiX) akzeptiert keine Suffixe wie `-dev`. Bei Entwicklungsversionen bauen `build-windows-app.ps1` und *Run workflow* unter Windows deshalb nur den NSIS-Installer.
 - Testversionen stattdessen normal taggen und den Release auf GitHub als *Pre-release* markieren.
 - *Re-run* eines Actions-Laufs baut den alten Commit. Nach Änderungen einen neuen Tag setzen oder *Run workflow* nutzen.
 

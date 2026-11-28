@@ -91,16 +91,23 @@ In dev mode `ffmpeg`, `ffprobe` and `lame` are taken from the `PATH`, so they mu
 
 ## Creating a release
 
-1. Bump the version in `tauri-app/src-tauri/Cargo.toml`. This is the only place for the version: `tauri.conf.json` contains no version, and the app shows the version from `Cargo.toml` below the title and in the **About** dialog.
-2. Commit, then create and push a tag. The tag must match the version (`v` + version from `Cargo.toml`):
+The version lives only in `tauri-app/src-tauri/Cargo.toml` (`tauri.conf.json` contains no version). The app shows it below the title and in the **About** dialog.
+
+Between two releases the code carries a development version such as `1.2.3-dev`, so a dev build is clearly distinguishable from the published version.
+
+1. Commit all changes, then run the release script:
    ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
+   scripts/release.sh            # 1.2.3-dev -> release 1.2.3
+   scripts/release.sh 1.3.0      # or a specific version
    ```
-3. GitHub Actions (`.github/workflows/release.yml`) builds all installers and creates a **draft release**. Review it and publish it under *Releases*.
+   On Windows: `scripts\release.ps1` (or `scripts\release.ps1 1.3.0`).
+
+   The script sets the version in `Cargo.toml` and `Cargo.lock`, commits `Version 1.2.3`, creates the tag `v1.2.3`, switches to `1.2.4-dev` and commits that. After confirmation it pushes `main` together with the tag.
+2. GitHub Actions (`.github/workflows/release.yml`) builds all installers and creates a **draft release**.
+3. Review the draft under *Releases* and **publish** it (pencil icon > *Publish release*). Only then do installed apps offer the update.
 
 Notes:
-- Use numeric versions only (`1.0.0`, not `1.0.0-beta.1`). The Windows MSI installer (WiX) does not accept pre-release suffixes, the build fails otherwise.
+- Release versions are numeric only (`1.2.3`). The Windows MSI installer (WiX) does not accept suffixes such as `-dev`. For development versions, `build-windows-app.ps1` and *Run workflow* therefore build only the NSIS installer on Windows.
 - For test builds, tag normally and mark the release on GitHub as *Pre-release* instead.
 - *Re-run* of an Actions run builds the old commit. After changes, push a new tag or use *Run workflow*.
 

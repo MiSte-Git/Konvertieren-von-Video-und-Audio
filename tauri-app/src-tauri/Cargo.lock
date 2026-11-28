@@ -1895,7 +1895,7 @@ dependencies = [
 
 [[package]]
 name = "konvertierung-tauri"
-version = "1.2.2"
+version = "1.2.3-dev"
 dependencies = [
  "serde",
  "serde_json",

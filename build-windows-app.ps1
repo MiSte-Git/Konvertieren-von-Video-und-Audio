@@ -108,7 +108,15 @@ Ensure-IconIco (Join-Path $ScriptDir "tauri-app\\src-tauri\\icons\\icon-256.png"
 Push-Location $TauriDir
 try {
   Write-Host "Baue Windows App via Tauri..."
-  cargo tauri build
+  # Entwicklungsversionen (z.B. 1.2.3-dev) kann WiX/MSI nicht verarbeiten, dann nur NSIS.
+  $cargoToml = Get-Content (Join-Path $TauriDir "src-tauri\Cargo.toml") -Raw
+  $appVersion = [regex]::Match($cargoToml, '(?m)^version = "([^"]*)"').Groups[1].Value
+  if ($appVersion -like "*-*") {
+    Write-Host "Entwicklungsversion ${appVersion}: baue nur den NSIS-Installer."
+    cargo tauri build --bundles nsis
+  } else {
+    cargo tauri build
+  }
 } finally {
   Pop-Location
 }
