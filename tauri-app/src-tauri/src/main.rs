@@ -214,6 +214,12 @@ fn get_noise_filter(mode: Option<&str>) -> Result<Option<String>, String> {
     }
 }
 
+// Ersetzt NaN/Unendlich durch Stille. Mit ffmpeg 7 liefert die Rauschunterdrueckung
+// bei langen Dateien vereinzelt NaN-Werte, die der AAC-Encoder mit
+// "Input contains (near) NaN/+-Inf" (Exit-Code 234) ablehnt.
+// Normale Werte (Betrag < 1e6) bleiben unveraendert.
+const NAN_GUARD_FILTER: &str = "aeval=exprs='if(lt(abs(val(ch)),1e6),val(ch),0)':c=same";
+
 fn needs_noise_model(noise_reduction: Option<&str>) -> bool {
     noise_reduction == Some("strong")
 }
@@ -224,9 +230,12 @@ fn build_audio_filter_chain(
     audio_adjustment: Option<&str>,
     noise_reduction: Option<&str>,
 ) -> Result<Option<String>, String> {
+    let noise = get_noise_filter(noise_reduction)?;
+    let guard = noise.as_ref().map(|_| NAN_GUARD_FILTER.to_string());
     let parts: Vec<String> = [
-        get_noise_filter(noise_reduction)?,
+        noise,
         get_audio_filter(audio_adjustment)?.map(String::from),
+        guard,
     ]
     .into_iter()
     .flatten()
@@ -761,6 +770,7 @@ mod tests {
         let noise_pos = chain.find("arnndn").unwrap();
         let volume_pos = chain.find("dynaudnorm").unwrap();
         assert!(noise_pos < volume_pos);
+        assert!(chain.ends_with(NAN_GUARD_FILTER));
         assert_eq!(
             build_audio_filter_chain(Some("none"), Some("none")).unwrap(),
             None
